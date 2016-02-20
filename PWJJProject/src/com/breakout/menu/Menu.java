@@ -106,8 +106,8 @@ public class Menu extends Application
 				ft.setOnFinished(evt -> setVisible(false));
 				ft.play();*/
 				BreakoutApp gameApp = new BreakoutApp();
-				ExecutorService exec = Executors.newSingleThreadExecutor();
-				exec.execute(gameApp);
+			//	ExecutorService exec = Executors.newSingleThreadExecutor();
+			//	exec.execute(gameApp);
  
 			});
  
@@ -170,26 +170,7 @@ public class Menu extends Application
  
 		}
 	}
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+
 	private static class MenuButton extends StackPane
 	{
 		private Text text;

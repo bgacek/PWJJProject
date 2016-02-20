@@ -26,18 +26,13 @@ public class BreakoutApp extends GameApplication implements Runnable
 {
 	
 	private Assets assets;
-	private PhysicsEntity desk, ball;
+	private PhysicsEntity desk, desk2, ball;
 	private IntegerProperty score = new SimpleIntegerProperty();
 	
 	private enum Type implements EntityType
 	{
-		BALL, BRICK, DESK, SCREEN;
+		BALL, BRICK, DESK, DESK2, SCREEN;
 	}
-	
-	/*public static void main(String[] args) 
-	{
-		launch();
-	}*/
 
 	@Override
 	protected void initSettings(GameSettings settings) 
@@ -49,12 +44,12 @@ public class BreakoutApp extends GameApplication implements Runnable
 		settings.setIntroEnabled(false);		
 	}
 
+
 	@Override
 	protected void initAssets() throws Exception 
 	{
 		assets = assetManager.cache();
 		assets.logCached();
-		
 	}
 
 	@Override
@@ -66,6 +61,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 		initBall();
 		initDesk();
 		initBrick();
+		initDesk2();
 		
 		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BRICK)
 		{
@@ -157,12 +153,21 @@ public class BreakoutApp extends GameApplication implements Runnable
 		addEntities(desk);
 	}
 	
+	private void initDesk2()
+	{
+		desk2 = new PhysicsEntity(Type.DESK2);
+		desk2.setPosition(getWidth()/2 - 128/2, 40);
+		desk2.setGraphics(assets.getTexture("desk.png"));
+		desk2.setBodyType(BodyType.KINEMATIC);
+		addEntities(desk2);
+	}
+	
 	private void initBrick()
 	{
 		for(int i = 0; i < 48; i++)
 		{
 			PhysicsEntity brick = new PhysicsEntity(Type.BRICK);
-			brick.setPosition((i%16) * 40, ((i/16)+1) * 40);
+			brick.setPosition((i%16) * 40, ((i/16)+5) * 40);
 			brick.setGraphics(assets.getTexture("brick.png"));
 			brick.setCollidable(true);
 			addEntities(brick);
@@ -192,6 +197,14 @@ public class BreakoutApp extends GameApplication implements Runnable
 			desk.setLinearVelocity(5, 0);
 		});
 		
+		inputManager.addKeyPressBinding(KeyCode.N, () -> {
+			desk2.setLinearVelocity(-5, 0);
+		});
+		
+		inputManager.addKeyPressBinding(KeyCode.M, () -> {
+			desk2.setLinearVelocity(5, 0);
+		});
+		
 	}
 
 	@Override
@@ -211,8 +224,10 @@ public class BreakoutApp extends GameApplication implements Runnable
 	@Override
 	public void run() 
 	{
-		launch();
-		
+		//launch();
 	}
-
+	public static void main(String[] args)
+	{
+		launch(args);
+	}
 }
