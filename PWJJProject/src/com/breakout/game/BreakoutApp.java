@@ -12,19 +12,22 @@ import com.almasb.fxgl.entity.EntityType;
 import com.almasb.fxgl.physics.CollisionHandler;
 import com.almasb.fxgl.physics.PhysicsEntity;
 import com.almasb.fxgl.physics.PhysicsManager;
+import com.breakout.menu.Menu;
 
+import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Point2D;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
-public class BreakoutApp extends GameApplication implements Runnable
+public class BreakoutApp extends GameApplication //implements Runnable
 {
-	
 	private Assets assets;
 	private PhysicsEntity desk, ball;
 	private IntegerProperty score = new SimpleIntegerProperty();
@@ -34,10 +37,6 @@ public class BreakoutApp extends GameApplication implements Runnable
 		BALL, BRICK, DESK, SCREEN;
 	}
 	
-	/*public static void main(String[] args) 
-	{
-		launch();
-	}*/
 
 	@Override
 	protected void initSettings(GameSettings settings) 
@@ -46,7 +45,8 @@ public class BreakoutApp extends GameApplication implements Runnable
 		settings.setVersion("1.0");
 		settings.setWidth(640);
 		settings.setHeight(960);
-		settings.setIntroEnabled(false);		
+		settings.setIntroEnabled(false);	
+		
 	}
 
 	@Override
@@ -207,12 +207,22 @@ public class BreakoutApp extends GameApplication implements Runnable
 			ball.setLinearVelocity(x, signY * 5);
 		}
 	}
-
-	@Override
-	public void run() 
+	public static void main(String args[])
 	{
+		Platform.runLater(new Runnable() {
+			public void run() {
+				try {
+					Menu a = new Menu();
+					a.start(new Stage());
+				} catch (Exception e)
+				{
+					System.err.println(e);
+				}
+		}});
 		launch();
-		
 	}
-
+	public static void init(String args[])
+	{
+		//tutaj chyba cos trzeba zrobic zeby zwrocic wystartowac launch
+	}
 }
