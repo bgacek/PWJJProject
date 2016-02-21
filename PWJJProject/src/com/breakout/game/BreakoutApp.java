@@ -26,7 +26,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-public class BreakoutApp extends GameApplication implements Runnable
+public class BreakoutApp extends GameApplication 
 {
 	private Assets assets;
 	private PhysicsEntity desk, desk2, ball;
@@ -36,7 +36,6 @@ public class BreakoutApp extends GameApplication implements Runnable
 	{
 		BALL, BRICK, DESK, DESK2, SCREEN;
 	}
-
 
 	@Override
 	protected void initSettings(GameSettings settings) 
@@ -48,15 +47,22 @@ public class BreakoutApp extends GameApplication implements Runnable
 		settings.setIntroEnabled(false);	
 		
 	}
-
-
+	
 	@Override
 	protected void initAssets() throws Exception 
 	{
 		assets = assetManager.cache();
 		assets.logCached();
 	}
-
+	private void initDesk()
+	{
+		desk = new PhysicsEntity(Type.DESK);
+		desk.setPosition(getWidth()/2 - 128/2, getHeight() - 25);
+		desk.setGraphics(assets.getTexture("desk.png"));
+		desk.setBodyType(BodyType.DYNAMIC);
+		desk.setCollidable(true);
+		addEntities(desk);
+	}
 	@Override
 	protected void initGame() 
 	{
@@ -76,11 +82,30 @@ public class BreakoutApp extends GameApplication implements Runnable
 			{
 				removeEntity(b);
 				score.set(score.get() + 100);
-				
 			}
 
 			@Override
 			public void onCollision(Entity a, Entity b){}
+	
+			@Override
+			public void onCollisionEnd(Entity a, Entity b){}
+			
+		});
+		
+		physicsManager.addCollisionHandler(new CollisionHandler(Type.DESK, Type.SCREEN)
+		{
+
+			@Override
+			public void onCollisionBegin(Entity a, Entity b) 
+			{
+				
+			}
+
+			@Override
+			public void onCollision(Entity a, Entity b)
+			{
+				
+			}
 	
 			@Override
 			public void onCollisionEnd(Entity a, Entity b){}
@@ -93,8 +118,8 @@ public class BreakoutApp extends GameApplication implements Runnable
 			@Override
 			public void onCollisionBegin(Entity a, Entity b) 
 			{
+				//if(Type.SCREEN.equals(other))
 				score.set(score.get() - 100);
-				
 			}
 
 			@Override
@@ -120,11 +145,13 @@ public class BreakoutApp extends GameApplication implements Runnable
 		PhysicsEntity left = new PhysicsEntity(Type.SCREEN);
 		left.setPosition(-10, 0);
 		left.setGraphics(new Rectangle(10, getHeight()));
-		
+		left.setCollidable(true);
+
 		PhysicsEntity right = new PhysicsEntity(Type.SCREEN);
 		right.setPosition(getWidth(), 0);
 		right.setGraphics(new Rectangle(10, getHeight()));
-		
+		right.setCollidable(true);
+
 		addEntities(top, bottom, left, right);
 	}
 	
@@ -149,21 +176,14 @@ public class BreakoutApp extends GameApplication implements Runnable
 		
 	}
 	
-	private void initDesk()
-	{
-		desk = new PhysicsEntity(Type.DESK);
-		desk.setPosition(getWidth()/2 - 128/2, getHeight() - 25);
-		desk.setGraphics(assets.getTexture("desk.png"));
-		desk.setBodyType(BodyType.KINEMATIC);
-		addEntities(desk);
-	}
+
 	
 	private void initDesk2()
 	{
 		desk2 = new PhysicsEntity(Type.DESK2);
 		desk2.setPosition(getWidth()/2 - 128/2, 40);
 		desk2.setGraphics(assets.getTexture("desk.png"));
-		desk2.setBodyType(BodyType.KINEMATIC);
+		desk2.setBodyType(BodyType.DYNAMIC);
 		addEntities(desk2);
 	}
 	
@@ -216,6 +236,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 	protected void onUpdate() 
 	{
 		desk.setLinearVelocity(0, 0);	
+		desk2.setLinearVelocity(0, 0);
 		
 		Point2D v = ball.getLinearVelocity();
 		if(Math.abs(v.getY()) < 5)
@@ -225,30 +246,16 @@ public class BreakoutApp extends GameApplication implements Runnable
 			ball.setLinearVelocity(x, signY * 5);
 		}
 	}
-	/*public static void main(String args[])
-	{
-
-		Platform.runLater(new Runnable() {
-			public void run() {
-				try {
-					Menu a = new Menu();
-					a.start(new Stage());
-				} catch (Exception e)
-				{
-					System.err.println(e);
-				}
-		}});
-		launch();
-	}*/
+	
 	public static void init(String args[])
 	{
 		//tutaj chyba cos trzeba zrobic zeby zwrocic wystartowac launch
 	}
 
 
-	@Override
+/*	@Override
 	public void run() {
 		launch();
 		
-	}
+	}*/
 }

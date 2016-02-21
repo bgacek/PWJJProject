@@ -59,38 +59,15 @@ public class Menu extends Application
 		root.getChildren().addAll(imgView, gameMenu);
  
 		Scene scene = new Scene(root);
-		/*scene.setOnKeyPressed(event -> {
-			if(event.getCode() == KeyCode.ESCAPE)
-			{
-				if(!gameMenu.isVisible())
-				{
-					FadeTransition ft = new FadeTransition(Duration.seconds(1), gameMenu);
-					ft.setFromValue(0);
-					ft.setToValue(1);
-					gameMenu.setVisible(true);
-					ft.play();
-				}
-				else
-				{
-					FadeTransition ft = new FadeTransition(Duration.seconds(1), gameMenu);
-					ft.setFromValue(1);
-					ft.setToValue(0);
-					ft.setOnFinished(evt -> gameMenu.setVisible(false));
-					ft.play();
-				}
-			}
-		});*/
+		
 		primaryStage.setScene(scene);
 		primaryStage.show();
 		
-		
 	}
 	
- 
 	private class GameMenu extends Parent
 	{
- 
- 
+
 		public GameMenu()
 		{
 			VBox menu0 = new VBox(10);
@@ -104,7 +81,6 @@ public class Menu extends Application
 			final int offset =  600;
 			menu1.setTranslateX(offset);
  
- 
 			MenuButton btnResume = new MenuButton("Run");
 			btnResume.setOnMouseClicked(event -> {
 				/*FadeTransition ft = new FadeTransition(Duration.seconds(0.5), this);
@@ -113,20 +89,22 @@ public class Menu extends Application
 				ft.setOnFinished(evt -> setVisible(false));
 				ft.play();*/
 
-				//BreakoutApp gameApp = new BreakoutApp();
-			//	ExecutorService exec = Executors.newSingleThreadExecutor();
-			//	exec.execute(gameApp);
-				Platform.runLater(new Runnable() {
-					public void run() {
-						try {
+				Platform.runLater(new Runnable() 
+				{
+					public void run() 
+					{
+						try 
+						{
 							BreakoutApp gameApp = new BreakoutApp();
 							gameApp.start(new Stage());
-						} catch (Exception e)
+							
+						} 
+						catch (Exception e)
 						{
 							System.err.println(e);
 						}
-				}});
- 
+					}
+				});
 			});
  
 			MenuButton btnOptions = new MenuButton("Options");
@@ -180,7 +158,6 @@ public class Menu extends Application
 			bg.setOpacity(0.4);
 			getChildren().addAll(bg, menu0);
  
- 
 		}
 	}
 
@@ -224,11 +201,8 @@ public class Menu extends Application
 			setOnMouseReleased(event -> setEffect(null));
 		}
 	}
- 
 	public static void main(String args[])
 	{
-
-		
 		launch();
 	}
  
