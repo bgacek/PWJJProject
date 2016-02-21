@@ -4,6 +4,7 @@ package com.breakout.menu;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Observable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
  
@@ -12,6 +13,8 @@ import com.breakout.game.BreakoutApp;
 import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -39,6 +42,7 @@ public class Menu extends Application
 	@Override
 	public void start(Stage primaryStage) throws Exception 
 	{
+		
 		Pane root = new Pane();
 		root.setPrefSize(800, 500);
  
@@ -78,7 +82,10 @@ public class Menu extends Application
 		});*/
 		primaryStage.setScene(scene);
 		primaryStage.show();
+		
+		
 	}
+	
  
 	private class GameMenu extends Parent
 	{
@@ -105,9 +112,20 @@ public class Menu extends Application
 				ft.setToValue(0);
 				ft.setOnFinished(evt -> setVisible(false));
 				ft.play();*/
-				BreakoutApp gameApp = new BreakoutApp();
+
+				//BreakoutApp gameApp = new BreakoutApp();
 			//	ExecutorService exec = Executors.newSingleThreadExecutor();
 			//	exec.execute(gameApp);
+				Platform.runLater(new Runnable() {
+					public void run() {
+						try {
+							BreakoutApp gameApp = new BreakoutApp();
+							gameApp.start(new Stage());
+						} catch (Exception e)
+						{
+							System.err.println(e);
+						}
+				}});
  
 			});
  
@@ -163,11 +181,6 @@ public class Menu extends Application
 			getChildren().addAll(bg, menu0);
  
  
- 
- 
- 
- 
- 
 		}
 	}
 
@@ -212,9 +225,11 @@ public class Menu extends Application
 		}
 	}
  
-	public static void main(String[] args)
+	public static void main(String args[])
 	{
-		launch(args);
+
+		
+		launch();
 	}
  
 }
