@@ -1,5 +1,7 @@
 package com.breakout.game;
 
+
+
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.FixtureDef;
@@ -12,6 +14,7 @@ import com.almasb.fxgl.entity.EntityType;
 import com.almasb.fxgl.physics.CollisionHandler;
 import com.almasb.fxgl.physics.PhysicsEntity;
 import com.almasb.fxgl.physics.PhysicsManager;
+import com.breakout.menu.DecWindow;
 import com.breakout.menu.Menu;
 
 import javafx.application.Platform;
@@ -25,6 +28,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 
 public class BreakoutApp extends GameApplication 
 {
@@ -33,7 +38,7 @@ public class BreakoutApp extends GameApplication
 	private IntegerProperty score = new SimpleIntegerProperty();
 	private Boolean flagaBall = true;
 	private Boolean flagaBall2 = true;
-	private Boolean pik = false;
+	private Integer scoreHolder;
 	
 	private enum Type implements EntityType
 	{
@@ -114,13 +119,9 @@ public class BreakoutApp extends GameApplication
 			public void onCollisionBegin(Entity a, Entity b) 
 			{
 				removeEntity(a);
-				if(flagaBall) 
-					flagaBall = false;
-				else 
-				{
-					flagaBall2 = false;
-					pik = true;
-				}
+				if(flagaBall) flagaBall = false;
+				else flagaBall2 = false;
+						
 			}
 
 			@Override
@@ -209,9 +210,6 @@ public class BreakoutApp extends GameApplication
 	{
 		desk2 = new PhysicsEntity(Type.DESK);
 		desk2.setPosition(getWidth()/2 - 128/2, 40);
-		desk2.setGraphics(assets.getTexture("desk.png"));
-		desk2.setBodyType(BodyType.DYNAMIC);
-
 		desk2.setGraphics(assets.getTexture("desk2.png"));
 		desk2.setBodyType(BodyType.DYNAMIC);
 
@@ -263,7 +261,24 @@ public class BreakoutApp extends GameApplication
 	}
 	private void onRestart()
 	{
-		removeEntity(desk);
+		Platform.runLater(new Runnable() 
+		{
+			public void run() 
+			{
+				try 
+				{
+					DecWindow dec = new DecWindow();
+					dec.start(new Stage());
+					
+				} 
+				catch (Exception e)
+				{
+					System.err.println(e);
+				}
+			}
+		});
+
+		/*removeEntity(desk);
 		removeEntity(desk2);
 		removeEntity(brick);
 		initDesk();
@@ -271,7 +286,11 @@ public class BreakoutApp extends GameApplication
 		initBall();
 		initBall2();
 		initBrick();
-		score.set(0);
+		score.set(0);*/
+
+		super.mainStage.hide();
+
+		
 	}
 	@Override
 	protected void onUpdate() 
@@ -295,24 +314,17 @@ public class BreakoutApp extends GameApplication
 		}
 		
 		if((!flagaBall && !flagaBall2) || score.getValue() == 4800)
-		{
-			
-			try 
-			{
+		{	
+				flagaBall = flagaBall2 = true;
 				onRestart();
-			}
-			catch (Exception e) 
-			{
-				e.printStackTrace();
-			}
-			
 		}
 	}
 	
-	
-	public static void init(String args[])
+	public void shutdown()
 	{
-		//tutaj chyba cos trzeba zrobic zeby zwrocic wystartowac launch
+		
 	}
+	
+	
 }
 
