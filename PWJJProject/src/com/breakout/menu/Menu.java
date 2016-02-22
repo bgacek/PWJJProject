@@ -83,11 +83,7 @@ public class Menu extends Application
  
 			MenuButton btnResume = new MenuButton("Run");
 			btnResume.setOnMouseClicked(event -> {
-				/*FadeTransition ft = new FadeTransition(Duration.seconds(0.5), this);
-				ft.setFromValue(1);
-				ft.setToValue(0);
-				ft.setOnFinished(evt -> setVisible(false));
-				ft.play();*/
+		
 				Stage stage = (Stage)getScene().getWindow();
 			    stage.hide();
 				Platform.runLater(new Runnable() 

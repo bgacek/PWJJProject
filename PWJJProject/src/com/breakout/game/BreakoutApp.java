@@ -26,14 +26,13 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-public class BreakoutApp extends GameApplication 
+public class BreakoutApp extends GameApplication
 {
 	private Assets assets;
 	private PhysicsEntity desk, desk2, ball, ball2, brick;
 	private IntegerProperty score = new SimpleIntegerProperty();
 	private Boolean flagaBall = true;
 	private Boolean flagaBall2 = true;
-	private Boolean pik = false;
 	
 	private enum Type implements EntityType
 	{
@@ -119,7 +118,6 @@ public class BreakoutApp extends GameApplication
 				else 
 				{
 					flagaBall2 = false;
-					pik = true;
 				}
 			}
 
@@ -209,9 +207,6 @@ public class BreakoutApp extends GameApplication
 	{
 		desk2 = new PhysicsEntity(Type.DESK);
 		desk2.setPosition(getWidth()/2 - 128/2, 40);
-		desk2.setGraphics(assets.getTexture("desk.png"));
-		desk2.setBodyType(BodyType.DYNAMIC);
-
 		desk2.setGraphics(assets.getTexture("desk2.png"));
 		desk2.setBodyType(BodyType.DYNAMIC);
 
@@ -261,18 +256,7 @@ public class BreakoutApp extends GameApplication
 		});
 		
 	}
-	private void onRestart()
-	{
-		removeEntity(desk);
-		removeEntity(desk2);
-		removeEntity(brick);
-		initDesk();
-		initDesk2();
-		initBall();
-		initBall2();
-		initBrick();
-		score.set(0);
-	}
+	
 	@Override
 	protected void onUpdate() 
 	{
@@ -294,25 +278,53 @@ public class BreakoutApp extends GameApplication
 			ball2.setLinearVelocity(x, signY * 5);
 		}
 		
-		if((!flagaBall && !flagaBall2) || score.getValue() == 4800)
+		if((!flagaBall && !flagaBall2) || score.get() == 4800)
 		{
-			
-			try 
+			Platform.runLater(new Runnable() 
 			{
-				onRestart();
-			}
-			catch (Exception e) 
-			{
-				e.printStackTrace();
-			}
-			
+				public void run() 
+				{
+					try 
+					{
+						BreakoutApp gameApp = new BreakoutApp();
+						gameApp.start(new Stage());
+						
+					} 
+					catch (Exception e)
+					{
+						System.err.println(e);
+					}
+				}
+			});
+			Platform.exit();
 		}
 	}
-	
-	
+	protected void onExit()
+	{
+	 		Platform.runLater(new Runnable() 
+	 		{
+	 			public void run() 
+	 			{
+	 				try 
+	 				{
+	 					System.out.println("///////////////////////////////////////////////////////////");
+						BreakoutApp game = new BreakoutApp();
+	 					game.start(new Stage());
+	 					
+	 				} 
+	 				catch (Exception e)
+	 				{
+	 					System.err.println(e);
+	 				}
+	 			}	
+	 		});
+			this.pause();
+	 }
 	public static void init(String args[])
 	{
 		//tutaj chyba cos trzeba zrobic zeby zwrocic wystartowac launch
 	}
+
+	
 }
 
