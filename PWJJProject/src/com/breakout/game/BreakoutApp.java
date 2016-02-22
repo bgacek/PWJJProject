@@ -29,7 +29,7 @@ import javafx.stage.Stage;
 public class BreakoutApp extends GameApplication 
 {
 	private Assets assets;
-	private PhysicsEntity desk, desk2, ball, ball2;
+	private PhysicsEntity desk, desk2, ball, ball2, brick;
 	private IntegerProperty score = new SimpleIntegerProperty();
 	private Boolean flagaBall = true;
 	private Boolean flagaBall2 = true;
@@ -47,7 +47,7 @@ public class BreakoutApp extends GameApplication
 		settings.setVersion("1.0");
 		settings.setWidth(640);
 		settings.setHeight(960);
-		settings.setIntroEnabled(false);	
+		settings.setIntroEnabled(false);
 	}
 	
 	@Override
@@ -160,11 +160,11 @@ public class BreakoutApp extends GameApplication
 	private void initBall()
 	{
 		ball = new PhysicsEntity(Type.BALL);
-		ball.setPosition(getWidth()/2 -30/2, getHeight()/2 + 40);
+		ball.setPosition(getWidth()/2 -30/2, getHeight()/2 + 120);
 		ball.setGraphics(assets.getTexture("ball.png"));
 		ball.setBodyType(BodyType.DYNAMIC);
 		ball.setCollidable(true);
-		
+		flagaBall = true;
 		FixtureDef fd = new FixtureDef();
 		fd.restitution = 0.8f;
 		fd.shape = new CircleShape();
@@ -174,18 +174,16 @@ public class BreakoutApp extends GameApplication
 		addEntities(ball);
 		
 		ball.setLinearVelocity(5, -5);
-		
-		
 	}
 	
 	private void initBall2()
 	{
 		ball2 = new PhysicsEntity(Type.BALL);
-		ball2.setPosition(getWidth()/2 -30/2, getHeight()/2 - 120);
+		ball2.setPosition(getWidth()/2 -30/2, getHeight()/2 - 200);
 		ball2.setGraphics(assets.getTexture("ball2.png"));
 		ball2.setBodyType(BodyType.DYNAMIC);
 		ball2.setCollidable(true);
-		
+		flagaBall2 = true;
 		FixtureDef fd = new FixtureDef();
 		fd.restitution = 0.8f;
 		fd.shape = new CircleShape();
@@ -195,8 +193,6 @@ public class BreakoutApp extends GameApplication
 		addEntities(ball2);
 		
 		ball2.setLinearVelocity(-5, 5);
-		
-		
 	}
 	
 	private void initDesk()
@@ -213,7 +209,6 @@ public class BreakoutApp extends GameApplication
 	{
 		desk2 = new PhysicsEntity(Type.DESK);
 		desk2.setPosition(getWidth()/2 - 128/2, 40);
-
 		desk2.setGraphics(assets.getTexture("desk.png"));
 		desk2.setBodyType(BodyType.DYNAMIC);
 
@@ -227,7 +222,7 @@ public class BreakoutApp extends GameApplication
 	{
 		for(int i = 0; i < 48; i++)
 		{
-			PhysicsEntity brick = new PhysicsEntity(Type.BRICK);
+			brick = new PhysicsEntity(Type.BRICK);
 			brick.setPosition((i%16) * 40, ((i/16)+10) * 40);
 			brick.setGraphics(assets.getTexture("brick.png"));
 			brick.setCollidable(true);
@@ -266,7 +261,18 @@ public class BreakoutApp extends GameApplication
 		});
 		
 	}
-
+	private void onRestart()
+	{
+		removeEntity(desk);
+		removeEntity(desk2);
+		removeEntity(brick);
+		initDesk();
+		initDesk2();
+		initBall();
+		initBall2();
+		initBrick();
+		score.set(0);
+	}
 	@Override
 	protected void onUpdate() 
 	{
@@ -290,34 +296,20 @@ public class BreakoutApp extends GameApplication
 		
 		if((!flagaBall && !flagaBall2) || score.getValue() == 4800)
 		{
-			System.out.println("dgfgftgfghfghfghgf");
-			onExit();
+			
+			try 
+			{
+				onRestart();
+			}
+			catch (Exception e) 
+			{
+				e.printStackTrace();
+			}
 			
 		}
 	}
 	
-	@Override
-	protected void onExit()
-	{
-		Platform.runLater(new Runnable() 
-		{
-			public void run() 
-			{
-				try 
-				{
-					System.out.println("///////////////////////////////////////////////////////////");
-					BreakoutApp game = new BreakoutApp();
-					game.start(new Stage());
-					
-				} 
-				catch (Exception e)
-				{
-					System.err.println(e);
-				}
-			}
-		});
-		this.pause();
-	}
+	
 	public static void init(String args[])
 	{
 		//tutaj chyba cos trzeba zrobic zeby zwrocic wystartowac launch
