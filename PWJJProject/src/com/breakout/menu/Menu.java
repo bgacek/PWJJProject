@@ -88,7 +88,8 @@ public class Menu extends Application
 				ft.setToValue(0);
 				ft.setOnFinished(evt -> setVisible(false));
 				ft.play();*/
-
+				Stage stage = (Stage)getScene().getWindow();
+			    stage.hide();
 				Platform.runLater(new Runnable() 
 				{
 					public void run() 

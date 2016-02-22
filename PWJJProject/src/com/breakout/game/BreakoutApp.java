@@ -29,12 +29,15 @@ import javafx.stage.Stage;
 public class BreakoutApp extends GameApplication 
 {
 	private Assets assets;
-	private PhysicsEntity desk, desk2, ball;
+	private PhysicsEntity desk, desk2, ball, ball2;
 	private IntegerProperty score = new SimpleIntegerProperty();
+	private Boolean flagaBall = true;
+	private Boolean flagaBall2 = true;
+	private Boolean pik = false;
 	
 	private enum Type implements EntityType
 	{
-		BALL, BRICK, DESK, DESK2, SCREEN;
+		BALL, BRICK, DESK, SCREEN, BORDER;
 	}
 
 	@Override
@@ -45,7 +48,6 @@ public class BreakoutApp extends GameApplication
 		settings.setWidth(640);
 		settings.setHeight(960);
 		settings.setIntroEnabled(false);	
-		
 	}
 	
 	@Override
@@ -54,15 +56,7 @@ public class BreakoutApp extends GameApplication
 		assets = assetManager.cache();
 		assets.logCached();
 	}
-	private void initDesk()
-	{
-		desk = new PhysicsEntity(Type.DESK);
-		desk.setPosition(getWidth()/2 - 128/2, getHeight() - 25);
-		desk.setGraphics(assets.getTexture("desk.png"));
-		desk.setBodyType(BodyType.DYNAMIC);
-		desk.setCollidable(true);
-		addEntities(desk);
-	}
+	
 	@Override
 	protected void initGame() 
 	{
@@ -70,6 +64,7 @@ public class BreakoutApp extends GameApplication
 		
 		initScreenBounds();
 		initBall();
+		initBall2();
 		initDesk();
 		initBrick();
 		initDesk2();
@@ -112,32 +107,38 @@ public class BreakoutApp extends GameApplication
 			
 		});
 		
-		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.SCREEN)
+		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BORDER)
 		{
 
 			@Override
 			public void onCollisionBegin(Entity a, Entity b) 
 			{
-				//if(Type.SCREEN.equals(other))
-				score.set(score.get() - 100);
+				removeEntity(a);
+				if(flagaBall) 
+					flagaBall = false;
+				else 
+				{
+					flagaBall2 = false;
+					pik = true;
+				}
 			}
 
 			@Override
 			public void onCollision(Entity a, Entity b){}
 	
 			@Override
-			public void onCollisionEnd(Entity a, Entity b){}
-			
+			public void onCollisionEnd(Entity a, Entity b){}	
 		});
 	}
 	
 	private void initScreenBounds()
 	{
-		PhysicsEntity top = new PhysicsEntity(Type.SCREEN);
+		PhysicsEntity top = new PhysicsEntity(Type.BORDER);
 		top.setPosition(0, 30);
 		top.setGraphics(new Rectangle(getWidth(), 10));
+		top.setCollidable(true);
 		
-		PhysicsEntity bottom = new PhysicsEntity(Type.SCREEN);
+		PhysicsEntity bottom = new PhysicsEntity(Type.BORDER);
 		bottom.setPosition(0, getHeight());
 		bottom.setGraphics(new Rectangle(getWidth(), 10));
 		bottom.setCollidable(true);
@@ -150,6 +151,7 @@ public class BreakoutApp extends GameApplication
 		PhysicsEntity right = new PhysicsEntity(Type.SCREEN);
 		right.setPosition(getWidth(), 0);
 		right.setGraphics(new Rectangle(10, getHeight()));
+
 		right.setCollidable(true);
 
 		addEntities(top, bottom, left, right);
@@ -158,7 +160,7 @@ public class BreakoutApp extends GameApplication
 	private void initBall()
 	{
 		ball = new PhysicsEntity(Type.BALL);
-		ball.setPosition(getWidth()/2 -30/2, getHeight()/2 - 30/2);
+		ball.setPosition(getWidth()/2 -30/2, getHeight()/2 + 40);
 		ball.setGraphics(assets.getTexture("ball.png"));
 		ball.setBodyType(BodyType.DYNAMIC);
 		ball.setCollidable(true);
@@ -176,14 +178,48 @@ public class BreakoutApp extends GameApplication
 		
 	}
 	
-
+	private void initBall2()
+	{
+		ball2 = new PhysicsEntity(Type.BALL);
+		ball2.setPosition(getWidth()/2 -30/2, getHeight()/2 - 120);
+		ball2.setGraphics(assets.getTexture("ball2.png"));
+		ball2.setBodyType(BodyType.DYNAMIC);
+		ball2.setCollidable(true);
+		
+		FixtureDef fd = new FixtureDef();
+		fd.restitution = 0.8f;
+		fd.shape = new CircleShape();
+		fd.shape.setRadius(PhysicsManager.toMeters(15));
+		ball2.setFixtureDef(fd);
+		
+		addEntities(ball2);
+		
+		ball2.setLinearVelocity(-5, 5);
+		
+		
+	}
+	
+	private void initDesk()
+	{
+		desk = new PhysicsEntity(Type.DESK);
+		desk.setPosition(getWidth()/2 - 128/2, getHeight() - 25);
+		desk.setGraphics(assets.getTexture("desk.png"));
+		desk.setBodyType(BodyType.DYNAMIC);
+		
+		addEntities(desk);
+	}
 	
 	private void initDesk2()
 	{
-		desk2 = new PhysicsEntity(Type.DESK2);
+		desk2 = new PhysicsEntity(Type.DESK);
 		desk2.setPosition(getWidth()/2 - 128/2, 40);
+
 		desk2.setGraphics(assets.getTexture("desk.png"));
 		desk2.setBodyType(BodyType.DYNAMIC);
+
+		desk2.setGraphics(assets.getTexture("desk2.png"));
+		desk2.setBodyType(BodyType.DYNAMIC);
+
 		addEntities(desk2);
 	}
 	
@@ -192,11 +228,11 @@ public class BreakoutApp extends GameApplication
 		for(int i = 0; i < 48; i++)
 		{
 			PhysicsEntity brick = new PhysicsEntity(Type.BRICK);
-			brick.setPosition((i%16) * 40, ((i/16)+5) * 40);
+			brick.setPosition((i%16) * 40, ((i/16)+10) * 40);
 			brick.setGraphics(assets.getTexture("brick.png"));
 			brick.setCollidable(true);
-			addEntities(brick);
 			
+			addEntities(brick);
 		}
 	}
 	@Override
@@ -207,27 +243,26 @@ public class BreakoutApp extends GameApplication
 		scoreText.setFont(Font.font(18));
 		scoreText.setText("Wynik: ");
 		scoreText.textProperty().bind(score.asString());
-		uiRoot.getChildren().add(scoreText);
-		
+		uiRoot.getChildren().add(scoreText);	
 	}
 
 	@Override
 	protected void initInput() 
 	{
 		inputManager.addKeyPressBinding(KeyCode.A, () -> {
-			desk.setLinearVelocity(-5, 0);
+			desk.setLinearVelocity(-7, 0);
 		});
 		
 		inputManager.addKeyPressBinding(KeyCode.D, () -> {
-			desk.setLinearVelocity(5, 0);
+			desk.setLinearVelocity(7, 0);
 		});
 		
 		inputManager.addKeyPressBinding(KeyCode.N, () -> {
-			desk2.setLinearVelocity(-5, 0);
+			desk2.setLinearVelocity(-7, 0);
 		});
 		
 		inputManager.addKeyPressBinding(KeyCode.M, () -> {
-			desk2.setLinearVelocity(5, 0);
+			desk2.setLinearVelocity(7, 0);
 		});
 		
 	}
@@ -238,24 +273,54 @@ public class BreakoutApp extends GameApplication
 		desk.setLinearVelocity(0, 0);	
 		desk2.setLinearVelocity(0, 0);
 		
-		Point2D v = ball.getLinearVelocity();
-		if(Math.abs(v.getY()) < 5)
+		Point2D v1 = ball.getLinearVelocity();
+		if(Math.abs(v1.getY()) < 5)
 		{
-			double x = v.getX();
-			double signY = Math.signum(v.getY());
+			double x = v1.getX();
+			double signY = Math.signum(v1.getY());
 			ball.setLinearVelocity(x, signY * 5);
+		}
+		Point2D v2 = ball2.getLinearVelocity();
+		if(Math.abs(v2.getY()) < 5)
+		{
+			double x = v2.getX();
+			double signY = Math.signum(v2.getY());
+			ball2.setLinearVelocity(x, signY * 5);
+		}
+		
+		if((!flagaBall && !flagaBall2) || score.getValue() == 4800)
+		{
+			System.out.println("dgfgftgfghfghfghgf");
+			onExit();
+			
 		}
 	}
 	
+	@Override
+	protected void onExit()
+	{
+		Platform.runLater(new Runnable() 
+		{
+			public void run() 
+			{
+				try 
+				{
+					System.out.println("///////////////////////////////////////////////////////////");
+					BreakoutApp game = new BreakoutApp();
+					game.start(new Stage());
+					
+				} 
+				catch (Exception e)
+				{
+					System.err.println(e);
+				}
+			}
+		});
+		this.pause();
+	}
 	public static void init(String args[])
 	{
 		//tutaj chyba cos trzeba zrobic zeby zwrocic wystartowac launch
 	}
-
-
-/*	@Override
-	public void run() {
-		launch();
-		
-	}*/
 }
+
