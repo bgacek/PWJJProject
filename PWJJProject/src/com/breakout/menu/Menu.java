@@ -29,6 +29,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -45,7 +46,6 @@ public class Menu extends Application
 		
 		Pane root = new Pane();
 		root.setPrefSize(800, 500);
- 
 		InputStream is = Files.newInputStream(Paths.get("res/images/menu.jpg"));
 		Image img = new Image(is);
 		is.close();
@@ -165,7 +165,8 @@ public class Menu extends Application
 		public MenuButton(String name)
 		{
 			text = new Text(name);
-			text.setFont(text.getFont().font(20));
+			text.getFont();
+			text.setFont(Font.font(20));
 			text.setFill(Color.WHITE);
  
 			Rectangle bg = new Rectangle(250, 30);

@@ -1,5 +1,7 @@
 package com.breakout.game;
 
+
+
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.FixtureDef;
@@ -12,31 +14,43 @@ import com.almasb.fxgl.entity.EntityType;
 import com.almasb.fxgl.physics.CollisionHandler;
 import com.almasb.fxgl.physics.PhysicsEntity;
 import com.almasb.fxgl.physics.PhysicsManager;
+import com.breakout.menu.DecWindow;
 import com.breakout.menu.Menu;
 
+import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.embed.swing.JFXPanel;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
-public class BreakoutApp extends GameApplication
+
+public class BreakoutApp extends GameApplication 
 {
 	private Assets assets;
 	private PhysicsEntity desk, desk2, ball, ball2, brick;
 	private IntegerProperty score = new SimpleIntegerProperty();
+	private Entity background;
+	private Button button1, button2;
 	private Boolean flagaBall = true;
 	private Boolean flagaBall2 = true;
-	
+
 	private enum Type implements EntityType
 	{
-		BALL, BRICK, DESK, SCREEN, BORDER;
+		BALL, BRICK, DESK, SCREEN, BORDER, BACKGROUND;
 	}
 
 	@Override
@@ -55,12 +69,19 @@ public class BreakoutApp extends GameApplication
 		assets = assetManager.cache();
 		assets.logCached();
 	}
-	
+	private void initBackGround()
+	{
+		background = new Entity(Type.BACKGROUND);
+		background.setPosition(0, 0);
+
+		background.setGraphics(assets.getTexture("background.png"));
+		addEntities(background);
+	}
 	@Override
 	protected void initGame() 
 	{
 		physicsManager.setGravity(0, 0);
-		
+		initBackGround();
 		initScreenBounds();
 		initBall();
 		initBall2();
@@ -86,26 +107,6 @@ public class BreakoutApp extends GameApplication
 			
 		});
 		
-		physicsManager.addCollisionHandler(new CollisionHandler(Type.DESK, Type.SCREEN)
-		{
-
-			@Override
-			public void onCollisionBegin(Entity a, Entity b) 
-			{
-				
-			}
-
-			@Override
-			public void onCollision(Entity a, Entity b)
-			{
-				
-			}
-	
-			@Override
-			public void onCollisionEnd(Entity a, Entity b){}
-			
-		});
-		
 		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BORDER)
 		{
 
@@ -113,12 +114,8 @@ public class BreakoutApp extends GameApplication
 			public void onCollisionBegin(Entity a, Entity b) 
 			{
 				removeEntity(a);
-				if(flagaBall) 
-					flagaBall = false;
-				else 
-				{
-					flagaBall2 = false;
-				}
+				if(flagaBall) flagaBall = false;
+				else flagaBall2 = false;		
 			}
 
 			@Override
@@ -256,6 +253,47 @@ public class BreakoutApp extends GameApplication
 		});
 		
 	}
+	private void onRestart()
+	{
+		Platform.runLater(new Runnable() 
+		{
+			public void run() 
+			{
+				try 
+				{
+					BreakoutApp dec = new BreakoutApp();
+					dec.start(new Stage());
+					
+				} 
+				catch (Exception e)
+				{
+					System.err.println(e);
+				}
+			}
+		});
+		super.mainStage.hide();
+	}
+	
+	private void onMainMenu()
+	{
+		Platform.runLater(new Runnable() 
+		{
+			public void run() 
+			{
+				try 
+				{
+					Menu mainMenu = new Menu();
+					mainMenu.start(new Stage());
+					
+				} 
+				catch (Exception e)
+				{
+					System.err.println(e);
+				}
+			}
+		});
+		super.mainStage.hide();
+	}
 	
 	@Override
 	protected void onUpdate() 
@@ -278,53 +316,57 @@ public class BreakoutApp extends GameApplication
 			ball2.setLinearVelocity(x, signY * 5);
 		}
 		
-		if((!flagaBall && !flagaBall2) || score.get() == 4800)
-		{
-			Platform.runLater(new Runnable() 
-			{
-				public void run() 
-				{
-					try 
-					{
-						BreakoutApp gameApp = new BreakoutApp();
-						gameApp.start(new Stage());
-						
-					} 
-					catch (Exception e)
-					{
-						System.err.println(e);
-					}
-				}
-			});
-			Platform.exit();
+		if((!flagaBall && !flagaBall2) || score.getValue() == 4800)
+		{	
+				flagaBall = flagaBall2 = true;
+				Rectangle rect = new Rectangle (100, 40, 100, 100);
+			    rect.setArcHeight(50);
+			    rect.setArcWidth(50);
+			    rect.setFill(Color.VIOLET);
+			 
+			    /// SRAM JUZ NA TO DZISIAJ ZIOMEK , ALE TU PROBOWALEM ZROBIC TAKIE FAJNE PRZYCIEMNONE TLO WJEZELI PRZEGRASZ Z 
+			    // PRZYCISKAMI POWROT DO MANU I RESTARTEM ALE NIESTETY NIE WYSZLO MI BO NIEW WIEM JAK TO ZASTOSOWAC DO 
+			    // CALEGO MAINSTAGE ... W SUMIE MOZNA TO ZROBIC POPRZEZ NP ft.setNode(button1); ... ALE CO DLA KAZDEGO TAK ROBIC ...WALE TO IDE W KIMO ELO
+			    
+			    FadeTransition ft = new FadeTransition(Duration.millis(3000), background);
+			    ft.setNode(button1);
+			    ft.setFromValue(1.0);
+		     	ft.setToValue(0.3);
+		     	ft.play();
+				initChoice();
 		}
 	}
-	protected void onExit()
+	public void initChoice()
 	{
-	 		Platform.runLater(new Runnable() 
-	 		{
-	 			public void run() 
-	 			{
-	 				try 
-	 				{
-	 					System.out.println("///////////////////////////////////////////////////////////");
-						BreakoutApp game = new BreakoutApp();
-	 					game.start(new Stage());
-	 					
-	 				} 
-	 				catch (Exception e)
-	 				{
-	 					System.err.println(e);
-	 				}
-	 			}	
-	 		});
-			this.pause();
-	 }
-	public static void init(String args[])
-	{
-		//tutaj chyba cos trzeba zrobic zeby zwrocic wystartowac launch
+		button1 = new Button();
+		button1.setLayoutX(getWidth()/3*2);
+		button1.setLayoutY(getHeight()/2);
+		button1.setPrefSize(120, 60);
+		button1.setText("Restart");
+		button1.setOnMouseClicked(event ->
+		{
+			onRestart();
+	    });
+		
+		button2 = new Button();
+		button2.setLayoutX(getWidth()/3*1);
+		button2.setLayoutY(getHeight()/2);
+		button2.setPrefSize(120, 60);
+		button2.setText("Get back to main menu");
+		button2.setOnMouseClicked(event ->
+		{
+			onMainMenu();
+	    });
+		
+	    Pane pane = new Pane();
+	    pane.getChildren().addAll(button1, button2);
+		this.addUINode(pane);
 	}
-
+	public void shutdown()
+	{
+		
+	}
+	
 	
 }
 
