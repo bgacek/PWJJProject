@@ -2,34 +2,35 @@ package com.breakout.game;
 
 
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
+
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.FixtureDef;
 
+import com.almasb.fxgl.FXGLLogger;
 import com.almasb.fxgl.GameApplication;
 import com.almasb.fxgl.GameSettings;
 import com.almasb.fxgl.asset.Assets;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityType;
+import com.almasb.fxgl.net.Client;
+import com.almasb.fxgl.net.Server;
 import com.almasb.fxgl.physics.CollisionHandler;
 import com.almasb.fxgl.physics.PhysicsEntity;
 import com.almasb.fxgl.physics.PhysicsManager;
-import com.breakout.menu.DecWindow;
 import com.breakout.menu.Menu;
-
 import javafx.animation.FadeTransition;
-import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.embed.swing.JFXPanel;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
@@ -37,8 +38,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-
-public class BreakoutApp extends GameApplication 
+public class BreakoutApp extends GameApplication implements Runnable
 {
 	private Assets assets;
 	private PhysicsEntity desk, desk2, ball, ball2, brick;
@@ -47,6 +47,28 @@ public class BreakoutApp extends GameApplication
 	private Button button1, button2;
 	private Boolean flagaBall = true;
 	private Boolean flagaBall2 = true;
+	
+	
+	public BreakoutApp(boolean isHost) 
+	{
+		super();
+		this.isHost = isHost;
+		System.out.println("tryb: "+this.isHost);
+	}
+
+	//////// SIECI
+	private Server server = new Server();
+	private Client client = new Client("127.0.0.1");
+	
+	private boolean isHost;
+	private boolean isConnected = false;
+	
+	private Map<KeyCode, Boolean> keys = new HashMap<>();
+	
+	private Queue<RequestMessage> requestQueue = new ConcurrentLinkedQueue<>();
+	private Queue<DataMessage> updateQueue = new ConcurrentLinkedQueue<>();
+	
+	//////////////
 
 	private enum Type implements EntityType
 	{
@@ -77,10 +99,40 @@ public class BreakoutApp extends GameApplication
 		background.setGraphics(assets.getTexture("background.png"));
 		addEntities(background);
 	}
+	
+	
+	private void initNetworking()
+	{
+		if(isHost)
+		{
+			server.addParser(RequestMessage.class, data -> requestQueue.offer(data));
+			server.addParser(String.class, data -> isConnected = true);
+			server.start();
+		}
+		else
+		{
+			client.addParser(DataMessage.class, data -> updateQueue.offer(data));
+			
+			try
+			{
+				client.connect();
+				client.send("Hi");
+			}
+			catch(Exception e)
+			{
+				log.severe(FXGLLogger.errorTraceAsString(e));
+				exit();
+			}
+			
+		}
+	}
+	
+	
 	@Override
 	protected void initGame() 
 	{
 		physicsManager.setGravity(0, 0);
+		initNetworking();
 		initBackGround();
 		initScreenBounds();
 		initBall();
@@ -236,68 +288,135 @@ public class BreakoutApp extends GameApplication
 	@Override
 	protected void initInput() 
 	{
-		inputManager.addKeyPressBinding(KeyCode.A, () -> {
-			desk.setLinearVelocity(-7, 0);
-		});
+		if(isHost)
+		{
+			inputManager.addKeyPressBinding(KeyCode.A, () -> {
+				desk.setLinearVelocity(-7, 0);
+			});
+			
+			inputManager.addKeyPressBinding(KeyCode.D, () -> {
+				desk.setLinearVelocity(7, 0);
+			});
+		}
+		else
+		{
+			initKeys(KeyCode.LEFT, KeyCode.RIGHT, KeyCode.ESCAPE);
+		}
 		
-		inputManager.addKeyPressBinding(KeyCode.D, () -> {
-			desk.setLinearVelocity(7, 0);
-		});
 		
-		inputManager.addKeyPressBinding(KeyCode.N, () -> {
+	/*	inputManager.addKeyPressBinding(KeyCode.N, () -> {
 			desk2.setLinearVelocity(-7, 0);
 		});
 		
 		inputManager.addKeyPressBinding(KeyCode.M, () -> {
 			desk2.setLinearVelocity(7, 0);
-		});
+		});*/
 		
 	}
+	
+	private void initKeys(KeyCode... codes)
+	{
+		for(KeyCode k : codes)
+		{
+			keys.put(k, false);
+			inputManager.addKeyPressBinding(k, () -> keys.put(k, true));
+		}
+	}
+	
 	private void onRestart()
 	{
-		Platform.runLater(new Runnable() 
-		{
-			public void run() 
-			{
-				try 
-				{
-					BreakoutApp dec = new BreakoutApp();
-					dec.start(new Stage());
-					
-				} 
-				catch (Exception e)
-				{
-					System.err.println(e);
-				}
-			}
-		});
-		super.mainStage.hide();
+		 BreakoutApp gameApp = new BreakoutApp(this.isHost);
+		 try 
+		 {
+			 gameApp.start(new Stage());
+		 }
+		 catch (Exception e) 
+		 {
+			 e.printStackTrace();
+		 }
+		 super.mainStage.hide();
 	}
 	
 	private void onMainMenu()
 	{
-		Platform.runLater(new Runnable() 
+		Menu mainMenu = new Menu();
+		try 
 		{
-			public void run() 
-			{
-				try 
-				{
-					Menu mainMenu = new Menu();
-					mainMenu.start(new Stage());
-					
-				} 
-				catch (Exception e)
-				{
-					System.err.println(e);
-				}
-			}
-		});
+			mainMenu.start(new Stage());
+		}
+		catch (Exception e) 
+		{
+			e.printStackTrace();
+		}
 		super.mainStage.hide();
 	}
 	
 	@Override
 	protected void onUpdate() 
 	{
+		if(isHost)
+		{
+			if(!isConnected)
+			{
+				return;
+			}
+			
+			RequestMessage data = requestQueue.poll();
+			if(data != null)
+			{
+				for(KeyCode key : data.keys)
+				{
+					if(key == KeyCode.LEFT)
+					{
+						desk2.translate(-5, 0);
+					}
+					else if(key == KeyCode.RIGHT)
+					{
+						desk2.translate(5, 0);
+					}
+					
+				}
+			}
+			
+			try
+			{
+				server.send(new DataMessage(desk.getTranslateX(), desk.getTranslateY(),
+						desk2.getTranslateX(), desk2.getTranslateY()));
+			}
+			catch(Exception e)
+			{
+				log.warning("Failed to send message: "+e.getMessage());
+			}
+			
+		}
+		else
+		{
+			DataMessage data = updateQueue.poll();
+			if(data != null)
+			{
+				desk.setPosition(data.x1, data.y1);
+				desk2.setPosition(data.x2, data.y2);
+			}
+			
+			KeyCode[] codes = keys.keySet().stream().filter(k -> keys.get(k)).collect(Collectors.toList()).toArray(new KeyCode[0]);
+			
+			try
+			{
+				client.send(new RequestMessage(codes));
+				
+				if(keys.get(KeyCode.ESCAPE))
+				{
+					exit();
+				}
+			}
+			catch(Exception e)
+			{
+				log.warning("Failed to send message: "+e.getMessage());
+			}
+			
+			keys.forEach((key, value) -> keys.put(key, false));
+		}
+		
 		desk.setLinearVelocity(0, 0);	
 		desk2.setLinearVelocity(0, 0);
 		
@@ -365,6 +484,12 @@ public class BreakoutApp extends GameApplication
 	public void shutdown()
 	{
 		
+	}
+
+	@Override
+	public void run() 
+	{
+		initGame();	
 	}
 	
 	

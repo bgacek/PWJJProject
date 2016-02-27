@@ -35,7 +35,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
  
  
-public class Menu extends Application
+public class Menu extends Application implements Runnable
 {
 	private GameMenu gameMenu;
  
@@ -72,38 +72,89 @@ public class Menu extends Application
 		{
 			VBox menu0 = new VBox(10);
 			VBox menu1 = new VBox(10);
+			VBox menu2 = new VBox(10);
  
 			menu0.setTranslateX(100);
 			menu1.setTranslateX(100);
+			menu2.setTranslateX(100);
 			menu0.setTranslateY(200);
 			menu1.setTranslateY(200);
+			menu2.setTranslateY(200);
  
 			final int offset =  600;
 			menu1.setTranslateX(offset);
+			menu2.setTranslateX(offset);
  
 			MenuButton btnResume = new MenuButton("Run");
 			btnResume.setOnMouseClicked(event -> {
 		
-				Stage stage = (Stage)getScene().getWindow();
-			    stage.hide();
-				Platform.runLater(new Runnable() 
-				{
-					public void run() 
-					{
-						try 
-						{
-							BreakoutApp gameApp = new BreakoutApp();
-							gameApp.start(new Stage());
-							
-						} 
-						catch (Exception e)
-						{
-							System.err.println(e);
-						}
-					}
+				getChildren().add(menu2);
+				TranslateTransition tt = new TranslateTransition(Duration.seconds(0.25), menu0);
+				tt.setToX(menu0.getTranslateX() - offset);
+ 
+				TranslateTransition tt2 = new TranslateTransition(Duration.seconds(0.5), menu2);
+				tt2.setToX(menu0.getTranslateX());
+ 
+				tt.play();
+				tt2.play();
+ 
+				tt.setOnFinished(evt -> {
+					getChildren().remove(menu0);
 				});
 			});
+			
+			MenuButton btnBackFromStart = new MenuButton("Back");
+			btnBackFromStart.setOnMouseClicked(event -> {
  
+				getChildren().add(menu0);
+				TranslateTransition tt = new TranslateTransition(Duration.seconds(0.25), menu2);
+				tt.setToX(menu2.getTranslateX() - offset);
+ 
+				TranslateTransition tt1 = new TranslateTransition(Duration.seconds(0.5), menu0);
+				tt1.setToX(menu2.getTranslateX());
+ 
+				tt.play();
+				tt1.play();
+ 
+				tt.setOnFinished(evt -> {
+					getChildren().remove(menu2);
+				});
+ 
+			});
+
+			MenuButton btnServer = new MenuButton("Serwer");
+			btnServer.setOnMouseClicked(event -> {
+				
+				this.getScene().getWindow().hide();
+				
+			    BreakoutApp gameApp = new BreakoutApp(true);
+			    try 
+			    {
+					gameApp.start(new Stage());
+				}
+			    catch (Exception e) 
+			    {
+					e.printStackTrace();
+				}
+				
+			});
+			
+			MenuButton btnClient = new MenuButton("Host");
+			btnClient.setOnMouseClicked(event -> {
+				
+				this.getScene().getWindow().hide();
+				
+			    BreakoutApp gameApp = new BreakoutApp(false);
+			    try 
+			    {
+					gameApp.start(new Stage());
+				}
+			    catch (Exception e) 
+			    {
+					e.printStackTrace();
+				}
+				
+			});
 			MenuButton btnOptions = new MenuButton("Options");
 			btnOptions.setOnMouseClicked(event -> {
  
@@ -125,8 +176,8 @@ public class Menu extends Application
 			MenuButton btnExit = new MenuButton("Exit");
 			btnExit.setOnMouseClicked(event -> { System.exit(0);});
  
-			MenuButton btnBack = new MenuButton("Back");
-			btnBack.setOnMouseClicked(event -> {
+			MenuButton btnBackFromOptions = new MenuButton("Back");
+			btnBackFromOptions.setOnMouseClicked(event -> {
  
 				getChildren().add(menu0);
 				TranslateTransition tt = new TranslateTransition(Duration.seconds(0.25), menu1);
@@ -143,12 +194,13 @@ public class Menu extends Application
 				});
  
 			});
- 
+			
 			MenuButton btnSound = new MenuButton("Sound");
 			MenuButton btnVideo = new MenuButton("Video");
  
 			menu0.getChildren().addAll(btnResume, btnOptions, btnExit);
-			menu1.getChildren().addAll(btnBack, btnSound, btnVideo);
+			menu1.getChildren().addAll(btnBackFromOptions, btnSound, btnVideo);
+			menu2.getChildren().addAll(btnBackFromStart, btnServer, btnClient);
  
 			Rectangle bg = new Rectangle(800, 500);
 			bg.setFill(Color.GRAY);
@@ -200,6 +252,12 @@ public class Menu extends Application
 		}
 	}
 	public static void main(String args[])
+	{
+		launch();
+	}
+	
+	@Override
+	public void run() 
 	{
 		launch();
 	}
