@@ -7,11 +7,9 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
-
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.FixtureDef;
-
 import com.almasb.fxgl.FXGLLogger;
 import com.almasb.fxgl.GameApplication;
 import com.almasb.fxgl.GameSettings;
@@ -48,6 +46,10 @@ public class BreakoutApp extends GameApplication implements Runnable
 	private Boolean flagaBall = true;
 	private Boolean flagaBall2 = true;
 	
+	private enum Type implements EntityType
+	{
+		BALL, BRICK, DESK, SCREEN, BORDER, BACKGROUND;
+	}
 	
 	public BreakoutApp(boolean isHost) 
 	{
@@ -67,13 +69,6 @@ public class BreakoutApp extends GameApplication implements Runnable
 	
 	private Queue<RequestMessage> requestQueue = new ConcurrentLinkedQueue<>();
 	private Queue<DataMessage> updateQueue = new ConcurrentLinkedQueue<>();
-	
-	//////////////
-
-	private enum Type implements EntityType
-	{
-		BALL, BRICK, DESK, SCREEN, BORDER, BACKGROUND;
-	}
 
 	@Override
 	protected void initSettings(GameSettings settings) 
@@ -87,10 +82,12 @@ public class BreakoutApp extends GameApplication implements Runnable
 	
 	@Override
 	protected void initAssets() throws Exception 
+
 	{
 		assets = assetManager.cache();
 		assets.logCached();
 	}
+	
 	private void initBackGround()
 	{
 		background = new Entity(Type.BACKGROUND);
@@ -133,13 +130,13 @@ public class BreakoutApp extends GameApplication implements Runnable
 	{
 		physicsManager.setGravity(0, 0);
 		initNetworking();
-		initBackGround();
+		/*initBackGround();
 		initScreenBounds();
 		initBall();
 		initBall2();
 		initDesk();
 		initBrick();
-		initDesk2();
+		initDesk2();*/
 		
 		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BRICK)
 		{
@@ -263,6 +260,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 	}
 	
 	private void initBrick()
+
 	{
 		for(int i = 0; i < 48; i++)
 		{
@@ -274,6 +272,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 			addEntities(brick);
 		}
 	}
+	
 	@Override
 	protected void initUI(Pane uiRoot) 
 	{
@@ -300,18 +299,8 @@ public class BreakoutApp extends GameApplication implements Runnable
 		}
 		else
 		{
-			initKeys(KeyCode.LEFT, KeyCode.RIGHT, KeyCode.ESCAPE);
+			initKeys(KeyCode.LEFT, KeyCode.RIGHT);
 		}
-		
-		
-	/*	inputManager.addKeyPressBinding(KeyCode.N, () -> {
-			desk2.setLinearVelocity(-7, 0);
-		});
-		
-		inputManager.addKeyPressBinding(KeyCode.M, () -> {
-			desk2.setLinearVelocity(7, 0);
-		});*/
-		
 	}
 	
 	private void initKeys(KeyCode... codes)
@@ -323,33 +312,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 		}
 	}
 	
-	private void onRestart()
-	{
-		 BreakoutApp gameApp = new BreakoutApp(this.isHost);
-		 try 
-		 {
-			 gameApp.start(new Stage());
-		 }
-		 catch (Exception e) 
-		 {
-			 e.printStackTrace();
-		 }
-		 super.mainStage.hide();
-	}
 	
-	private void onMainMenu()
-	{
-		Menu mainMenu = new Menu();
-		try 
-		{
-			mainMenu.start(new Stage());
-		}
-		catch (Exception e) 
-		{
-			e.printStackTrace();
-		}
-		super.mainStage.hide();
-	}
 	
 	@Override
 	protected void onUpdate() 
@@ -442,10 +405,6 @@ public class BreakoutApp extends GameApplication implements Runnable
 			    rect.setArcHeight(50);
 			    rect.setArcWidth(50);
 			    rect.setFill(Color.VIOLET);
-			 
-			    /// SRAM JUZ NA TO DZISIAJ ZIOMEK , ALE TU PROBOWALEM ZROBIC TAKIE FAJNE PRZYCIEMNONE TLO WJEZELI PRZEGRASZ Z 
-			    // PRZYCISKAMI POWROT DO MANU I RESTARTEM ALE NIESTETY NIE WYSZLO MI BO NIEW WIEM JAK TO ZASTOSOWAC DO 
-			    // CALEGO MAINSTAGE ... W SUMIE MOZNA TO ZROBIC POPRZEZ NP ft.setNode(button1); ... ALE CO DLA KAZDEGO TAK ROBIC ...WALE TO IDE W KIMO ELO
 			    
 			    FadeTransition ft = new FadeTransition(Duration.millis(3000), background);
 			    ft.setNode(button1);
@@ -481,17 +440,39 @@ public class BreakoutApp extends GameApplication implements Runnable
 	    pane.getChildren().addAll(button1, button2);
 		this.addUINode(pane);
 	}
-	public void shutdown()
+	
+	private void onRestart()
 	{
-		
+		 BreakoutApp gameApp = new BreakoutApp(this.isHost);
+		 try 
+		 {
+			 gameApp.start(new Stage());
+		 }
+		 catch (Exception e) 
+		 {
+			 e.printStackTrace();
+		 }
+		 super.mainStage.hide();
 	}
-
+	
+	private void onMainMenu()
+	{
+		Menu mainMenu = new Menu();
+		try 
+		{
+			mainMenu.start(new Stage());
+		}
+		catch (Exception e) 
+		{
+			e.printStackTrace();
+		}
+		super.mainStage.hide();
+	}
+	
 	@Override
 	public void run() 
 	{
 		initGame();	
-	}
-	
-	
+	}	
 }
 

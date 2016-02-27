@@ -128,6 +128,7 @@ public class Menu extends Application implements Runnable
 				this.getScene().getWindow().hide();
 				
 			    BreakoutApp gameApp = new BreakoutApp(true);
+
 			    try 
 			    {
 					gameApp.start(new Stage());
