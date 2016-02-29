@@ -124,19 +124,30 @@ public class BreakoutApp extends GameApplication implements Runnable
 		}
 	}
 	
+	@Override
+	protected void onExit()
+	{
+		if(isHost)
+		{
+			server.stop();
+		}
+		else
+		{
+			client.disconnect();
+		}
+	}
 	
 	@Override
 	protected void initGame() 
 	{
 		physicsManager.setGravity(0, 0);
-		initNetworking();
-		/*initBackGround();
+		
+		initBackGround();
 		initScreenBounds();
-		initBall();
-		initBall2();
-		initDesk();
+		initBallS();
+		initDeskS();
 		initBrick();
-		initDesk2();*/
+		initNetworking();
 		
 		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BRICK)
 		{
@@ -201,62 +212,49 @@ public class BreakoutApp extends GameApplication implements Runnable
 		addEntities(top, bottom, left, right);
 	}
 	
-	private void initBall()
+	private void initBallS()
 	{
+		FixtureDef fd = new FixtureDef();
+		fd.restitution = 0.8f;
+		fd.shape = new CircleShape();
+		fd.shape.setRadius(PhysicsManager.toMeters(15));
+		
 		ball = new PhysicsEntity(Type.BALL);
 		ball.setPosition(getWidth()/2 -30/2, getHeight()/2 + 120);
 		ball.setGraphics(assets.getTexture("ball.png"));
 		ball.setBodyType(BodyType.DYNAMIC);
 		ball.setCollidable(true);
 		flagaBall = true;
-		FixtureDef fd = new FixtureDef();
-		fd.restitution = 0.8f;
-		fd.shape = new CircleShape();
-		fd.shape.setRadius(PhysicsManager.toMeters(15));
 		ball.setFixtureDef(fd);
 		
-		addEntities(ball);
-		
-		ball.setLinearVelocity(5, -5);
-	}
-	
-	private void initBall2()
-	{
 		ball2 = new PhysicsEntity(Type.BALL);
 		ball2.setPosition(getWidth()/2 -30/2, getHeight()/2 - 200);
 		ball2.setGraphics(assets.getTexture("ball2.png"));
 		ball2.setBodyType(BodyType.DYNAMIC);
 		ball2.setCollidable(true);
 		flagaBall2 = true;
-		FixtureDef fd = new FixtureDef();
-		fd.restitution = 0.8f;
-		fd.shape = new CircleShape();
-		fd.shape.setRadius(PhysicsManager.toMeters(15));
 		ball2.setFixtureDef(fd);
 		
-		addEntities(ball2);
+		addEntities(ball, ball2);
 		
+		ball.setLinearVelocity(5, -5);
 		ball2.setLinearVelocity(-5, 5);
 	}
 	
-	private void initDesk()
+	private void initDeskS()
 	{
 		desk = new PhysicsEntity(Type.DESK);
 		desk.setPosition(getWidth()/2 - 128/2, getHeight() - 25);
 		desk.setGraphics(assets.getTexture("desk.png"));
 		desk.setBodyType(BodyType.DYNAMIC);
 		
-		addEntities(desk);
-	}
-	
-	private void initDesk2()
-	{
 		desk2 = new PhysicsEntity(Type.DESK);
 		desk2.setPosition(getWidth()/2 - 128/2, 40);
 		desk2.setGraphics(assets.getTexture("desk2.png"));
 		desk2.setBodyType(BodyType.DYNAMIC);
-
-		addEntities(desk2);
+		
+		
+		addEntities(desk, desk2);
 	}
 	
 	private void initBrick()
@@ -317,69 +315,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 	@Override
 	protected void onUpdate() 
 	{
-		if(isHost)
-		{
-			if(!isConnected)
-			{
-				return;
-			}
-			
-			RequestMessage data = requestQueue.poll();
-			if(data != null)
-			{
-				for(KeyCode key : data.keys)
-				{
-					if(key == KeyCode.LEFT)
-					{
-						desk2.translate(-5, 0);
-					}
-					else if(key == KeyCode.RIGHT)
-					{
-						desk2.translate(5, 0);
-					}
-					
-				}
-			}
-			
-			try
-			{
-				server.send(new DataMessage(desk.getTranslateX(), desk.getTranslateY(),
-						desk2.getTranslateX(), desk2.getTranslateY()));
-			}
-			catch(Exception e)
-			{
-				log.warning("Failed to send message: "+e.getMessage());
-			}
-			
-		}
-		else
-		{
-			DataMessage data = updateQueue.poll();
-			if(data != null)
-			{
-				desk.setPosition(data.x1, data.y1);
-				desk2.setPosition(data.x2, data.y2);
-			}
-			
-			KeyCode[] codes = keys.keySet().stream().filter(k -> keys.get(k)).collect(Collectors.toList()).toArray(new KeyCode[0]);
-			
-			try
-			{
-				client.send(new RequestMessage(codes));
-				
-				if(keys.get(KeyCode.ESCAPE))
-				{
-					exit();
-				}
-			}
-			catch(Exception e)
-			{
-				log.warning("Failed to send message: "+e.getMessage());
-			}
-			
-			keys.forEach((key, value) -> keys.put(key, false));
-		}
-		
+
 		desk.setLinearVelocity(0, 0);	
 		desk2.setLinearVelocity(0, 0);
 		
@@ -413,6 +349,70 @@ public class BreakoutApp extends GameApplication implements Runnable
 		     	ft.play();
 				initChoice();
 		}
+		
+		if(isHost)
+		{
+			if(!isConnected)
+			{
+				//onUpdate();
+			}
+			
+			RequestMessage data = requestQueue.poll();
+			if(data != null)
+			{
+				for(KeyCode key : data.keys)
+				{
+					if(key == KeyCode.LEFT)
+					{
+						desk2.translate(-7, 0);
+					}
+					else if(key == KeyCode.RIGHT)
+					{
+						desk2.translate(7, 0);
+					}
+				}
+			}
+			
+			try
+			{
+				server.send(new DataMessage(desk.getTranslateX(), desk.getTranslateY(),
+						desk2.getTranslateX(), desk2.getTranslateY()));
+			}
+			catch(Exception e)
+			{
+				log.warning("Failed to send message: "+e.getMessage());
+			}
+			
+		}
+		else
+		{
+			DataMessage data = updateQueue.poll();
+			
+			if(data != null)
+			{
+				desk.setPosition(data.x1, data.y1);
+				desk2.setPosition(data.x2, data.y2);
+			}
+			
+			KeyCode[] codes = keys.keySet().stream().filter(k -> keys.get(k)).collect(Collectors.toList()).toArray(new KeyCode[0]);
+			
+			try
+			{
+				client.send(new RequestMessage(codes));
+				
+			/*	if(keys.get(KeyCode.ESCAPE))
+				{
+					exit();
+				}*/
+			}
+			catch(Exception e)
+			{
+				log.warning("Failed to send message: "+e.getMessage());
+			}
+			
+			keys.forEach((key, value) -> keys.put(key, false));
+		}
+		
 	}
 	public void initChoice()
 	{
