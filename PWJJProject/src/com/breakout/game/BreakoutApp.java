@@ -39,7 +39,8 @@ import javafx.util.Duration;
 public class BreakoutApp extends GameApplication implements Runnable
 {
 	private Assets assets;
-	private PhysicsEntity desk, desk2, ball, ball2, brick;
+	private PhysicsEntity ball, ball2, brick;
+	private Entity desk, desk2;
 	private IntegerProperty score = new SimpleIntegerProperty();
 	private Entity background;
 	private Button button1, button2;
@@ -141,15 +142,16 @@ public class BreakoutApp extends GameApplication implements Runnable
 	protected void initGame() 
 	{
 		physicsManager.setGravity(0, 0);
-		
+		initNetworking();
 		initBackGround();
 		initScreenBounds();
 		initBallS();
-		initDeskS();
-		initBrick();
-		initNetworking();
 		
-		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BRICK)
+		initBrick();
+		
+		initDeskS();
+		
+		/*physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BRICK)
 		{
 
 			@Override
@@ -183,7 +185,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 	
 			@Override
 			public void onCollisionEnd(Entity a, Entity b){}	
-		});
+		});*/
 	}
 	
 	private void initScreenBounds()
@@ -243,15 +245,15 @@ public class BreakoutApp extends GameApplication implements Runnable
 	
 	private void initDeskS()
 	{
-		desk = new PhysicsEntity(Type.DESK);
+		desk = new Entity(Type.DESK);
 		desk.setPosition(getWidth()/2 - 128/2, getHeight() - 25);
 		desk.setGraphics(assets.getTexture("desk.png"));
-		desk.setBodyType(BodyType.DYNAMIC);
+		//desk.setBodyType(BodyType.DYNAMIC);
 		
-		desk2 = new PhysicsEntity(Type.DESK);
+		desk2 = new Entity(Type.DESK);
 		desk2.setPosition(getWidth()/2 - 128/2, 40);
 		desk2.setGraphics(assets.getTexture("desk2.png"));
-		desk2.setBodyType(BodyType.DYNAMIC);
+		//desk2.setBodyType(BodyType.DYNAMIC);
 		
 		
 		addEntities(desk, desk2);
@@ -288,11 +290,12 @@ public class BreakoutApp extends GameApplication implements Runnable
 		if(isHost)
 		{
 			inputManager.addKeyPressBinding(KeyCode.A, () -> {
-				desk.setLinearVelocity(-7, 0);
+				//desk.setLinearVelocity(-7, 0);
+				desk.translate(-7, 0);
 			});
 			
 			inputManager.addKeyPressBinding(KeyCode.D, () -> {
-				desk.setLinearVelocity(7, 0);
+				desk.translate(7, 0);
 			});
 		}
 		else
@@ -306,18 +309,18 @@ public class BreakoutApp extends GameApplication implements Runnable
 		for(KeyCode k : codes)
 		{
 			keys.put(k, false);
-			inputManager.addKeyPressBinding(k, () -> keys.put(k, true));
+			this.inputManager.addKeyPressBinding(k, () -> {
+				keys.put(k, true);
+			});
 		}
 	}
-	
 	
 	
 	@Override
 	protected void onUpdate() 
 	{
 
-		desk.setLinearVelocity(0, 0);	
-		desk2.setLinearVelocity(0, 0);
+		
 		
 		Point2D v1 = ball.getLinearVelocity();
 		if(Math.abs(v1.getY()) < 5)
@@ -334,7 +337,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 			ball2.setLinearVelocity(x, signY * 5);
 		}
 		
-		if((!flagaBall && !flagaBall2) || score.getValue() == 4800)
+		/*if((!flagaBall && !flagaBall2) || score.getValue() == 4800)
 		{	
 				flagaBall = flagaBall2 = true;
 				Rectangle rect = new Rectangle (100, 40, 100, 100);
@@ -348,13 +351,13 @@ public class BreakoutApp extends GameApplication implements Runnable
 		     	ft.setToValue(0.3);
 		     	ft.play();
 				initChoice();
-		}
+		}*/
 		
 		if(isHost)
 		{
 			if(!isConnected)
 			{
-				//onUpdate();
+				return;
 			}
 			
 			RequestMessage data = requestQueue.poll();
@@ -400,10 +403,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 			{
 				client.send(new RequestMessage(codes));
 				
-			/*	if(keys.get(KeyCode.ESCAPE))
-				{
-					exit();
-				}*/
+
 			}
 			catch(Exception e)
 			{
@@ -475,4 +475,3 @@ public class BreakoutApp extends GameApplication implements Runnable
 		initGame();	
 	}	
 }
-

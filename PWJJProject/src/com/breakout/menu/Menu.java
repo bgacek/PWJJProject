@@ -4,17 +4,9 @@ package com.breakout.menu;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Observable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
- 
 import com.breakout.game.BreakoutApp;
- 
-import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -23,7 +15,6 @@ import javafx.scene.effect.GaussianBlur;
 import javafx.scene.effect.Glow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -126,7 +117,7 @@ public class Menu extends Application implements Runnable
 			btnServer.setOnMouseClicked(event -> {
 				
 				this.getScene().getWindow().hide();
-				
+						
 			    BreakoutApp gameApp = new BreakoutApp(true);
 
 			    try 
