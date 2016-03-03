@@ -1,9 +1,9 @@
+
 package com.breakout.menu;
 
 
 
 import com.breakout.game.BreakoutApp;
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
@@ -48,8 +48,8 @@ public class DecWindow extends Application
 			{
 				try 
 				{
-					BreakoutApp gameApp = new BreakoutApp();
-					gameApp.start(new Stage());
+					//BreakoutApp gameApp = new BreakoutApp();
+					//gameApp.start(new Stage());
 					
 				} 
 				catch (Exception e)

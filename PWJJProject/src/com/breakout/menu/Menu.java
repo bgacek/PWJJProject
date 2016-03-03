@@ -34,16 +34,15 @@ public class Menu extends Application implements Runnable
 	@Override
 	public void start(Stage primaryStage) throws Exception 
 	{
-		
 		Pane root = new Pane();
-		root.setPrefSize(800, 500);
+		root.setPrefSize(640, 960);
 		InputStream is = Files.newInputStream(Paths.get("res/images/menu.jpg"));
 		Image img = new Image(is);
 		is.close();
  
 		ImageView imgView = new ImageView(img);
-		imgView.setFitHeight(500);
-		imgView.setFitWidth(800);
+		imgView.setFitHeight(960);
+		imgView.setFitWidth(640);
  
 		gameMenu = new GameMenu();
 		gameMenu.setVisible(true);
@@ -116,13 +115,13 @@ public class Menu extends Application implements Runnable
 			MenuButton btnServer = new MenuButton("Serwer");
 			btnServer.setOnMouseClicked(event -> {
 				
-				this.getScene().getWindow().hide();
+				//this.getScene().getWindow().hide();
 						
-			    BreakoutApp gameApp = new BreakoutApp(true);
+			    BreakoutApp gameApp = new BreakoutApp(true, (Stage)this.getScene().getWindow());
 
 			    try 
 			    {
-					gameApp.start(new Stage());
+					gameApp.run();
 				}
 			    catch (Exception e) 
 			    {
@@ -131,15 +130,15 @@ public class Menu extends Application implements Runnable
 				
 			});
 			
-			MenuButton btnClient = new MenuButton("Host");
+			MenuButton btnClient = new MenuButton("Klient");
 			btnClient.setOnMouseClicked(event -> {
 				
 				this.getScene().getWindow().hide();
 				
-			    BreakoutApp gameApp = new BreakoutApp(false);
+			    BreakoutApp gameApp = new BreakoutApp(false, (Stage)this.getScene().getWindow());
 			    try 
 			    {
-					gameApp.start(new Stage());
+					gameApp.run();
 				}
 			    catch (Exception e) 
 			    {
