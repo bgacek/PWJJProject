@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.dynamics.BodyType;
@@ -75,10 +77,10 @@ public class BreakoutApp extends GameApplication implements Runnable
 	protected void initSettings(GameSettings settings) 
 	{
 		settings.setTitle("Block Blaster");
-		settings.setVersion("1.0");
 		settings.setWidth(640);
 		settings.setHeight(960);
 		settings.setIntroEnabled(false);
+		
 	}
 	
 	@Override
@@ -186,6 +188,22 @@ public class BreakoutApp extends GameApplication implements Runnable
 			@Override
 			public void onCollisionEnd(Entity a, Entity b){}	
 		});*/
+		
+		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.DESK)
+		{
+
+			@Override
+			public void onCollisionBegin(Entity a, Entity b) 
+			{
+				score.set(score.get() + 100);
+			}
+
+			@Override
+			public void onCollision(Entity a, Entity b){}
+	
+			@Override
+			public void onCollisionEnd(Entity a, Entity b){}	
+		});
 	}
 	
 	private void initScreenBounds()
@@ -248,13 +266,13 @@ public class BreakoutApp extends GameApplication implements Runnable
 		desk = new Entity(Type.DESK);
 		desk.setPosition(getWidth()/2 - 128/2, getHeight() - 25);
 		desk.setGraphics(assets.getTexture("desk.png"));
-		//desk.setBodyType(BodyType.DYNAMIC);
+		desk.setCollidable(true);
+		desk.setVisible(true);
 		
 		desk2 = new Entity(Type.DESK);
 		desk2.setPosition(getWidth()/2 - 128/2, 40);
 		desk2.setGraphics(assets.getTexture("desk2.png"));
-		//desk2.setBodyType(BodyType.DYNAMIC);
-		
+		desk2.setCollidable(true);
 		
 		addEntities(desk, desk2);
 	}
@@ -290,7 +308,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 		if(isHost)
 		{
 			inputManager.addKeyPressBinding(KeyCode.A, () -> {
-				//desk.setLinearVelocity(-7, 0);
+				
 				desk.translate(-7, 0);
 			});
 			
@@ -352,6 +370,8 @@ public class BreakoutApp extends GameApplication implements Runnable
 		     	ft.play();
 				initChoice();
 		}*/
+		Executor exec = Executors.newFixedThreadPool(2);
+		
 		
 		if(isHost)
 		{
@@ -360,57 +380,81 @@ public class BreakoutApp extends GameApplication implements Runnable
 				return;
 			}
 			
-			RequestMessage data = requestQueue.poll();
-			if(data != null)
+			exec.execute(new Runnable()
 			{
-				for(KeyCode key : data.keys)
+				public void run() 
 				{
-					if(key == KeyCode.LEFT)
+					RequestMessage data = requestQueue.poll();
+						
+					if(data != null)
 					{
-						desk2.translate(-7, 0);
+						for(KeyCode key : data.keys)
+						{
+							if(key == KeyCode.LEFT)
+							{
+								desk2.translate(-7, 0);
+							}
+							else if(key == KeyCode.RIGHT)
+							{
+								desk2.translate(7, 0);
+							}
+						}
 					}
-					else if(key == KeyCode.RIGHT)
+				}					
+			});
+			
+			exec.execute(new Runnable()
+			{
+				public void run() 
+				{
+					try
 					{
-						desk2.translate(7, 0);
+						server.send(new DataMessage(desk.getTranslateX(), desk.getTranslateY(),
+								desk2.getTranslateX(), desk2.getTranslateY()));
+					}
+					catch(Exception e)
+					{
+						log.warning("Failed to send message: "+e.getMessage());
 					}
 				}
-			}
-			
-			try
-			{
-				server.send(new DataMessage(desk.getTranslateX(), desk.getTranslateY(),
-						desk2.getTranslateX(), desk2.getTranslateY()));
-			}
-			catch(Exception e)
-			{
-				log.warning("Failed to send message: "+e.getMessage());
-			}
+			});
 			
 		}
 		else
 		{
-			DataMessage data = updateQueue.poll();
-			
-			if(data != null)
+			exec.execute(new Runnable()
 			{
-				desk.setPosition(data.x1, data.y1);
-				desk2.setPosition(data.x2, data.y2);
-			}
+				public void run() 
+				{
 			
-			KeyCode[] codes = keys.keySet().stream().filter(k -> keys.get(k)).collect(Collectors.toList()).toArray(new KeyCode[0]);
+					DataMessage data = updateQueue.poll();
 			
-			try
+					if(data != null)
+					{
+						desk.setPosition(data.x1, data.y1);
+						desk2.setPosition(data.x2, data.y2);
+					}
+				}
+			});
+			
+			exec.execute(new Runnable()
 			{
-				client.send(new RequestMessage(codes));
-				
-
-			}
-			catch(Exception e)
-			{
-				log.warning("Failed to send message: "+e.getMessage());
-			}
-			
-			keys.forEach((key, value) -> keys.put(key, false));
+				public void run() 
+				{
+					KeyCode[] codes = keys.keySet().stream().filter(k -> keys.get(k)).collect(Collectors.toList()).toArray(new KeyCode[0]);
+					
+					try
+					{
+						client.send(new RequestMessage(codes));
+					}
+					catch(Exception e)
+					{
+						log.warning("Failed to send message: "+e.getMessage());
+					}
+					
+					keys.forEach((key, value) -> keys.put(key, false));
+				}
+			});
 		}
 		
 	}
