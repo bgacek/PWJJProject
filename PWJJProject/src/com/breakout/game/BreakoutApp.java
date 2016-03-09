@@ -128,6 +128,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 	@Override
 	protected void initGame() 
 	{
+		
 		physicsManager.setGravity(0, 0);
 		initNetworking();
 		initBackGround();
@@ -226,14 +227,14 @@ public class BreakoutApp extends GameApplication implements Runnable
 		ball1 = new PhysicsEntity(Type.BALL);
 		ball1.setPosition(getWidth()/2 -30/2, getHeight()/2 + 120);
 		ball1.setGraphics(assets.getTexture("ball.png"));
-		ball1.setBodyType(BodyType.DYNAMIC);
+		
 		ball1.setCollidable(true);
 		ball1.setFixtureDef(fd);
 		
 		ball2 = new PhysicsEntity(Type.BALL2);
 		ball2.setPosition(getWidth()/2 -30/2, getHeight()/2 - 200);
 		ball2.setGraphics(assets.getTexture("ball2.png"));
-		ball2.setBodyType(BodyType.DYNAMIC);
+		//ball2.setBodyType(BodyType.DYNAMIC);
 		ball2.setCollidable(true);
 		ball2.setFixtureDef(fd);
 		
@@ -278,7 +279,6 @@ public class BreakoutApp extends GameApplication implements Runnable
 	@Override
 	protected void initUI(Pane uiRoot) 
 	{
-		
 		Text scorePlayer_1 = new Text();
 		scorePlayer_1.setTranslateY(20);
 		scorePlayer_1.setFont(Font.font(18));
@@ -312,7 +312,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 		}
 		else
 		{
-			initKeys(KeyCode.LEFT, KeyCode.RIGHT);
+			initKeys(KeyCode.LEFT, KeyCode.RIGHT, KeyCode.ENTER, KeyCode.ESCAPE);
 		}
 		
 	}
@@ -336,20 +336,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 		Point2D vDesk2 = desk2.getLinearVelocity();
 		desk1.setLinearVelocity(0, 0);
 		desk2.setLinearVelocity(0, 0);
-		Point2D v1 = ball1.getLinearVelocity();
-		if(Math.abs(v1.getY()) < 5)
-		{
-			double x = v1.getX();
-			double signY = Math.signum(v1.getY());
-			ball1.setLinearVelocity(x, signY * 5);
-		}
-		Point2D v2 = ball2.getLinearVelocity();
-		if(Math.abs(v2.getY()) < 5)
-		{
-			double x = v2.getX();
-			double signY = Math.signum(v2.getY());
-			ball2.setLinearVelocity(x, signY * 5);
-		}
+		System.out.println(isConnected);
 		
 		/*if((!flagaBall && !flagaBall2) || score_1.getValue() == 4800)
 		{	
@@ -367,48 +354,102 @@ public class BreakoutApp extends GameApplication implements Runnable
 				initChoice();
 		}*/
 		
-		if(isHost)
-		{
-			
-			if(!isConnected)
-			{
-				return;
-			}
 		
-			RequestMessage data = requestQueue.poll();
-			if(data != null)
-			{
-				for(KeyCode key : data.keys)
+		if(isHost)
+		{	
+				RequestMessage data = requestQueue.poll();
+				if(data != null)
 				{
-					if(key == KeyCode.LEFT)
+					for(KeyCode key : data.keys)
 					{
-						desk2.setLinearVelocity(-7, 0);
-					}
-					else if(key == KeyCode.RIGHT)
-					{
-						desk2.setLinearVelocity(7, 0);
+						if(key == KeyCode.LEFT)
+						{
+							desk2.setLinearVelocity(-7, 0);
+						}
+						else if(key == KeyCode.RIGHT)
+						{
+							desk2.setLinearVelocity(7, 0);
+						}
+						else if(key == KeyCode.ENTER)
+						{
+							this.isConnected = true;
+						}
+						else if(key == KeyCode.ESCAPE)
+						{
+							exit();
+						}
 					}
 				}
+				if(isConnected)
+				{
+					System.out.println(isConnected);
+					ball1.setBodyType(BodyType.DYNAMIC);
+					ball2.setBodyType(BodyType.DYNAMIC);
+					Point2D v1 = ball1.getLinearVelocity();
+					if(Math.abs(v1.getY()) < 5)
+					{
+						double x = v1.getX();
+						double signY = Math.signum(v1.getY());
+						ball1.setLinearVelocity(x, signY * 5);
+					}
+					Point2D v2 = ball2.getLinearVelocity();
+					if(Math.abs(v2.getY()) < 5)
+					{
+						double x = v2.getX();
+						double signY = Math.signum(v2.getY());
+						ball2.setLinearVelocity(x, signY * 5);
+					}
+					try
+					{	
+						double xDesk1 = vDesk1.getX();
+						double yDesk1 = vDesk1.getY();
+						double xDesk2 = vDesk2.getX();
+						double yDesk2 = vDesk2.getY();
+						double xBall1 = v1.getX();
+						double yBall1 = v1.getY();
+						double xBall2 = v2.getX();
+						double yBall2 = v2.getY();
+						server.send(new DataMessage(xDesk1, yDesk1, xDesk2, yDesk2, xBall1, yBall1, xBall2, yBall2));
+					}
+					catch(Exception e)
+					{
+						log.warning("Failed to send message: "+e.getMessage());
+					}
+				}
+				else
+				{
+					ball1.setBodyType(BodyType.DYNAMIC);
+					ball2.setBodyType(BodyType.DYNAMIC);
+					Point2D v1 = ball1.getLinearVelocity();
+					if(Math.abs(v1.getY()) < 5)
+					{
+						double x = v1.getX();
+						double signY = Math.signum(v1.getY());
+						ball1.setLinearVelocity(x, signY * 5);
+					}
+					Point2D v2 = ball2.getLinearVelocity();
+					if(Math.abs(v2.getY()) < 5)
+					{
+						double x = v2.getX();
+						double signY = Math.signum(v2.getY());
+						ball2.setLinearVelocity(x, signY * 5);
+					}
+					
+					try
+					{	
+						double xDesk1 = vDesk1.getX();
+						double yDesk1 = vDesk1.getY();
+						double xDesk2 = vDesk2.getX();
+						double yDesk2 = vDesk2.getY();
+						server.send(new DataMessage(xDesk1, yDesk1, xDesk2, yDesk2));
+					}
+					catch(Exception e)
+					{
+						log.warning("Failed to send message: "+e.getMessage());
+					}
+				}
+				
 			}
-			
-			try
-			{	
-				double xDesk1 = vDesk1.getX();
-				double yDesk1 = vDesk1.getY();
-				double xDesk2 = vDesk2.getX();
-				double yDesk2 = vDesk2.getY();
-				double xBall1 = v1.getX();
-				double yBall1 = v1.getY();
-				double xBall2 = v2.getX();
-				double yBall2 = v2.getY();
-				server.send(new DataMessage(xDesk1, yDesk1, xDesk2, yDesk2, xBall1, yBall1, xBall2, yBall2));
-			}
-			catch(Exception e)
-			{
-				log.warning("Failed to send message: "+e.getMessage());
-			}
-			
-		}
 		else
 		{
 			Runnable thread1 = new Runnable () 
@@ -436,6 +477,10 @@ public class BreakoutApp extends GameApplication implements Runnable
 					try
 					{
 						client.send(new RequestMessage(codes));	
+						if(keys.get(KeyCode.ESCAPE))
+		  				{
+		  					exit();
+		 				}
 					}
 					catch(Exception e)
 					{
