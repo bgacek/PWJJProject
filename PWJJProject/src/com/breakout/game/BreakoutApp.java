@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.dynamics.BodyType;
@@ -41,42 +39,42 @@ import javafx.util.Duration;
 public class BreakoutApp extends GameApplication implements Runnable
 {
 	private Assets assets;
-	private PhysicsEntity ball, ball2, brick;
-	private Entity desk, desk2;
-	private IntegerProperty score = new SimpleIntegerProperty();
-	private Entity background;
-	private Button button1, button2;
 	private Boolean flagaBall = true;
 	private Boolean flagaBall2 = true;
+	private Entity background;
+	private Button button1, button2;
+	private IntegerProperty score_1 = new SimpleIntegerProperty();
+	private IntegerProperty score_2 = new SimpleIntegerProperty();
+	private PhysicsEntity desk1, desk2, ball1, ball2, brick;
+	private Stage gameStage;
+	
+	//////// SIECI
+	private boolean isHost;
+	private boolean isConnected = false;
+	private Server server = new Server();
+	private Client client = new Client("127.0.0.1");
+	private Map<KeyCode, Boolean> keys = new HashMap<>();
+	private Queue<RequestMessage> requestQueue = new ConcurrentLinkedQueue<>();
+	private Queue<DataMessage> updateQueue = new ConcurrentLinkedQueue<>();
 	
 	private enum Type implements EntityType
 	{
-		BALL, BRICK, DESK, SCREEN, BORDER, BACKGROUND;
+		BALL, BALL2, BRICK, DESK, SCREEN, BORDER, BACKGROUND;
 	}
 	
-	public BreakoutApp(boolean isHost) 
+	public BreakoutApp(boolean isHost, Stage gameStage) 
 	{
 		super();
 		this.isHost = isHost;
+		this.gameStage = gameStage;
 		System.out.println("tryb: "+this.isHost);
 	}
-
-	//////// SIECI
-	private Server server = new Server();
-	private Client client = new Client("127.0.0.1");
 	
-	private boolean isHost;
-	private boolean isConnected = false;
-	
-	private Map<KeyCode, Boolean> keys = new HashMap<>();
-	
-	private Queue<RequestMessage> requestQueue = new ConcurrentLinkedQueue<>();
-	private Queue<DataMessage> updateQueue = new ConcurrentLinkedQueue<>();
-
 	@Override
 	protected void initSettings(GameSettings settings) 
 	{
 		settings.setTitle("Block Blaster");
+		settings.setVersion("1.0");
 		settings.setWidth(640);
 		settings.setHeight(960);
 		settings.setIntroEnabled(false);
@@ -85,19 +83,19 @@ public class BreakoutApp extends GameApplication implements Runnable
 	
 	@Override
 	protected void initAssets() throws Exception 
-
 	{
 		assets = assetManager.cache();
 		assets.logCached();
+		
 	}
 	
 	private void initBackGround()
 	{
 		background = new Entity(Type.BACKGROUND);
 		background.setPosition(0, 0);
-
 		background.setGraphics(assets.getTexture("background.png"));
 		addEntities(background);
+		
 	}
 	
 	
@@ -122,22 +120,9 @@ public class BreakoutApp extends GameApplication implements Runnable
 			{
 				log.severe(FXGLLogger.errorTraceAsString(e));
 				exit();
-			}
-			
+			}	
 		}
-	}
-	
-	@Override
-	protected void onExit()
-	{
-		if(isHost)
-		{
-			server.stop();
-		}
-		else
-		{
-			client.disconnect();
-		}
+		
 	}
 	
 	@Override
@@ -147,20 +132,18 @@ public class BreakoutApp extends GameApplication implements Runnable
 		initNetworking();
 		initBackGround();
 		initScreenBounds();
-		initBallS();
+		initBalls();
+		initBricks();	
+		initDesks();
 		
-		initBrick();
-		
-		initDeskS();
-		
-		/*physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BRICK)
+		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BRICK)
 		{
 
 			@Override
 			public void onCollisionBegin(Entity a, Entity b) 
 			{
 				removeEntity(b);
-				score.set(score.get() + 100);
+				score_1.set(score_1.get() + 100);
 			}
 
 			@Override
@@ -171,7 +154,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 			
 		});
 		
-		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BORDER)
+		/*physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.BORDER)
 		{
 
 			@Override
@@ -189,20 +172,22 @@ public class BreakoutApp extends GameApplication implements Runnable
 			public void onCollisionEnd(Entity a, Entity b){}	
 		});*/
 		
-		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL, Type.DESK)
+		physicsManager.addCollisionHandler(new CollisionHandler(Type.BALL2, Type.BRICK)
 		{
 
 			@Override
 			public void onCollisionBegin(Entity a, Entity b) 
 			{
-				score.set(score.get() + 100);
+				removeEntity(b);
+				score_2.set(score_2.get() + 100);
 			}
 
 			@Override
 			public void onCollision(Entity a, Entity b){}
 	
 			@Override
-			public void onCollisionEnd(Entity a, Entity b){}	
+			public void onCollisionEnd(Entity a, Entity b){}
+			
 		});
 	}
 	
@@ -221,63 +206,61 @@ public class BreakoutApp extends GameApplication implements Runnable
 		PhysicsEntity left = new PhysicsEntity(Type.SCREEN);
 		left.setPosition(-10, 0);
 		left.setGraphics(new Rectangle(10, getHeight()));
-		left.setCollidable(true);
 
 		PhysicsEntity right = new PhysicsEntity(Type.SCREEN);
 		right.setPosition(getWidth(), 0);
 		right.setGraphics(new Rectangle(10, getHeight()));
 
-		right.setCollidable(true);
 
 		addEntities(top, bottom, left, right);
+		
 	}
 	
-	private void initBallS()
+	private void initBalls()
 	{
 		FixtureDef fd = new FixtureDef();
 		fd.restitution = 0.8f;
 		fd.shape = new CircleShape();
 		fd.shape.setRadius(PhysicsManager.toMeters(15));
 		
-		ball = new PhysicsEntity(Type.BALL);
-		ball.setPosition(getWidth()/2 -30/2, getHeight()/2 + 120);
-		ball.setGraphics(assets.getTexture("ball.png"));
-		ball.setBodyType(BodyType.DYNAMIC);
-		ball.setCollidable(true);
-		flagaBall = true;
-		ball.setFixtureDef(fd);
+		ball1 = new PhysicsEntity(Type.BALL);
+		ball1.setPosition(getWidth()/2 -30/2, getHeight()/2 + 120);
+		ball1.setGraphics(assets.getTexture("ball.png"));
+		ball1.setBodyType(BodyType.DYNAMIC);
+		ball1.setCollidable(true);
+		ball1.setFixtureDef(fd);
 		
-		ball2 = new PhysicsEntity(Type.BALL);
+		ball2 = new PhysicsEntity(Type.BALL2);
 		ball2.setPosition(getWidth()/2 -30/2, getHeight()/2 - 200);
 		ball2.setGraphics(assets.getTexture("ball2.png"));
 		ball2.setBodyType(BodyType.DYNAMIC);
 		ball2.setCollidable(true);
-		flagaBall2 = true;
 		ball2.setFixtureDef(fd);
 		
-		addEntities(ball, ball2);
+		addEntities(ball1, ball2);
 		
-		ball.setLinearVelocity(5, -5);
-		ball2.setLinearVelocity(-5, 5);
+		ball1.setLinearVelocity(0, 5);
+		ball2.setLinearVelocity(0, -5);
+		
 	}
 	
-	private void initDeskS()
+	private void initDesks()
 	{
-		desk = new Entity(Type.DESK);
-		desk.setPosition(getWidth()/2 - 128/2, getHeight() - 25);
-		desk.setGraphics(assets.getTexture("desk.png"));
-		desk.setCollidable(true);
-		desk.setVisible(true);
+		desk1 = new PhysicsEntity(Type.DESK);
+		desk1.setPosition(getWidth()/2 - 128/2, getHeight() - 25);
+		desk1.setGraphics(assets.getTexture("desk.png"));
+		desk1.setBodyType(BodyType.DYNAMIC);
 		
-		desk2 = new Entity(Type.DESK);
+		desk2 = new PhysicsEntity(Type.DESK);
 		desk2.setPosition(getWidth()/2 - 128/2, 40);
 		desk2.setGraphics(assets.getTexture("desk2.png"));
-		desk2.setCollidable(true);
+		desk2.setBodyType(BodyType.DYNAMIC);
+	
 		
-		addEntities(desk, desk2);
+		addEntities(desk1, desk2);
 	}
 	
-	private void initBrick()
+	private void initBricks()
 
 	{
 		for(int i = 0; i < 48; i++)
@@ -289,17 +272,28 @@ public class BreakoutApp extends GameApplication implements Runnable
 			
 			addEntities(brick);
 		}
+		
 	}
 	
 	@Override
 	protected void initUI(Pane uiRoot) 
 	{
-		Text scoreText = new Text();
-		scoreText.setTranslateY(20);
-		scoreText.setFont(Font.font(18));
-		scoreText.setText("Wynik: ");
-		scoreText.textProperty().bind(score.asString());
-		uiRoot.getChildren().add(scoreText);	
+		
+		Text scorePlayer_1 = new Text();
+		scorePlayer_1.setTranslateY(20);
+		scorePlayer_1.setFont(Font.font(18));
+		scorePlayer_1.setText("Score: ");
+		scorePlayer_1.textProperty().bind(score_1.asString());
+		uiRoot.getChildren().add(scorePlayer_1);
+		
+		Text scorePlayer_2 = new Text();
+		scorePlayer_2.setTranslateY(20);
+		scorePlayer_2.setTranslateX(540);
+		scorePlayer_2.setFont(Font.font(18));
+		scorePlayer_2.setText("Score player 2: ");
+		scorePlayer_2.textProperty().bind(score_2.asString());
+		uiRoot.getChildren().add(scorePlayer_2);	
+		
 	}
 
 	@Override
@@ -308,18 +302,19 @@ public class BreakoutApp extends GameApplication implements Runnable
 		if(isHost)
 		{
 			inputManager.addKeyPressBinding(KeyCode.A, () -> {
-				
-				desk.translate(-7, 0);
+				desk1.setLinearVelocity(-7, 0);
 			});
 			
 			inputManager.addKeyPressBinding(KeyCode.D, () -> {
-				desk.translate(7, 0);
+				
+				desk1.setLinearVelocity(7, 0);
 			});
 		}
 		else
 		{
 			initKeys(KeyCode.LEFT, KeyCode.RIGHT);
 		}
+		
 	}
 	
 	private void initKeys(KeyCode... codes)
@@ -331,21 +326,22 @@ public class BreakoutApp extends GameApplication implements Runnable
 				keys.put(k, true);
 			});
 		}
+		
 	}
-	
 	
 	@Override
 	protected void onUpdate() 
 	{
-
-		
-		
-		Point2D v1 = ball.getLinearVelocity();
+		Point2D vDesk1 = desk1.getLinearVelocity();
+		Point2D vDesk2 = desk2.getLinearVelocity();
+		desk1.setLinearVelocity(0, 0);
+		desk2.setLinearVelocity(0, 0);
+		Point2D v1 = ball1.getLinearVelocity();
 		if(Math.abs(v1.getY()) < 5)
 		{
 			double x = v1.getX();
 			double signY = Math.signum(v1.getY());
-			ball.setLinearVelocity(x, signY * 5);
+			ball1.setLinearVelocity(x, signY * 5);
 		}
 		Point2D v2 = ball2.getLinearVelocity();
 		if(Math.abs(v2.getY()) < 5)
@@ -355,7 +351,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 			ball2.setLinearVelocity(x, signY * 5);
 		}
 		
-		/*if((!flagaBall && !flagaBall2) || score.getValue() == 4800)
+		/*if((!flagaBall && !flagaBall2) || score_1.getValue() == 4800)
 		{	
 				flagaBall = flagaBall2 = true;
 				Rectangle rect = new Rectangle (100, 40, 100, 100);
@@ -370,94 +366,91 @@ public class BreakoutApp extends GameApplication implements Runnable
 		     	ft.play();
 				initChoice();
 		}*/
-		Executor exec = Executors.newFixedThreadPool(2);
-		
 		
 		if(isHost)
 		{
+			
 			if(!isConnected)
 			{
 				return;
 			}
-			
-			exec.execute(new Runnable()
+		
+			RequestMessage data = requestQueue.poll();
+			if(data != null)
 			{
-				public void run() 
+				for(KeyCode key : data.keys)
 				{
-					RequestMessage data = requestQueue.poll();
-						
-					if(data != null)
+					if(key == KeyCode.LEFT)
 					{
-						for(KeyCode key : data.keys)
-						{
-							if(key == KeyCode.LEFT)
-							{
-								desk2.translate(-7, 0);
-							}
-							else if(key == KeyCode.RIGHT)
-							{
-								desk2.translate(7, 0);
-							}
-						}
+						desk2.setLinearVelocity(-7, 0);
 					}
-				}					
-			});
-			
-			exec.execute(new Runnable()
-			{
-				public void run() 
-				{
-					try
+					else if(key == KeyCode.RIGHT)
 					{
-						server.send(new DataMessage(desk.getTranslateX(), desk.getTranslateY(),
-								desk2.getTranslateX(), desk2.getTranslateY()));
-					}
-					catch(Exception e)
-					{
-						log.warning("Failed to send message: "+e.getMessage());
+						desk2.setLinearVelocity(7, 0);
 					}
 				}
-			});
+			}
+			
+			try
+			{	
+				double xDesk1 = vDesk1.getX();
+				double yDesk1 = vDesk1.getY();
+				double xDesk2 = vDesk2.getX();
+				double yDesk2 = vDesk2.getY();
+				double xBall1 = v1.getX();
+				double yBall1 = v1.getY();
+				double xBall2 = v2.getX();
+				double yBall2 = v2.getY();
+				server.send(new DataMessage(xDesk1, yDesk1, xDesk2, yDesk2, xBall1, yBall1, xBall2, yBall2));
+			}
+			catch(Exception e)
+			{
+				log.warning("Failed to send message: "+e.getMessage());
+			}
 			
 		}
 		else
 		{
-			exec.execute(new Runnable()
+			Runnable thread1 = new Runnable () 
 			{
-				public void run() 
+				public void run () 
 				{
-			
 					DataMessage data = updateQueue.poll();
-			
+						
 					if(data != null)
 					{
-						desk.setPosition(data.x1, data.y1);
-						desk2.setPosition(data.x2, data.y2);
+						desk1.setLinearVelocity(data.x1, data.y1);
+						desk2.setLinearVelocity(data.x2, data.y2);
+						ball1.setLinearVelocity(data.x3, data.y3);
+						ball2.setLinearVelocity(data.x4, data.y4);
 					}
 				}
-			});
-			
-			exec.execute(new Runnable()
+			};
+				  
+			Runnable thread2 = new Runnable () 
 			{
-				public void run() 
-				{
+				public void run () 
+				{	  
 					KeyCode[] codes = keys.keySet().stream().filter(k -> keys.get(k)).collect(Collectors.toList()).toArray(new KeyCode[0]);
-					
+						
 					try
 					{
-						client.send(new RequestMessage(codes));
+						client.send(new RequestMessage(codes));	
 					}
 					catch(Exception e)
 					{
 						log.warning("Failed to send message: "+e.getMessage());
 					}
-					
-					keys.forEach((key, value) -> keys.put(key, false));
+				keys.forEach((key, value) -> keys.put(key, false));
 				}
-			});
+			};
+			
+			thread2.run();
+			thread1.run();
 		}
-		
+
 	}
+	
 	public void initChoice()
 	{
 		button1 = new Button();
@@ -487,7 +480,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 	
 	private void onRestart()
 	{
-		 BreakoutApp gameApp = new BreakoutApp(this.isHost);
+		 BreakoutApp gameApp = new BreakoutApp(this.isHost, this.gameStage);
 		 try 
 		 {
 			 gameApp.start(new Stage());
@@ -516,6 +509,11 @@ public class BreakoutApp extends GameApplication implements Runnable
 	@Override
 	public void run() 
 	{
-		initGame();	
-	}	
+		try {
+			super.start(gameStage);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	
+	}
+	
 }
