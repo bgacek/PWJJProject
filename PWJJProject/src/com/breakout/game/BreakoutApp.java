@@ -133,7 +133,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 		initNetworking();
 		initBackGround();
 		initScreenBounds();
-		initBalls();
+		initBalls0();
 		initBricks();	
 		initDesks();
 		
@@ -217,33 +217,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 		
 	}
 	
-	private void initBalls()
-	{
-		FixtureDef fd = new FixtureDef();
-		fd.restitution = 0.8f;
-		fd.shape = new CircleShape();
-		fd.shape.setRadius(PhysicsManager.toMeters(15));
-		
-		ball1 = new PhysicsEntity(Type.BALL);
-		ball1.setPosition(getWidth()/2 -30/2, getHeight()/2 + 120);
-		ball1.setGraphics(assets.getTexture("ball.png"));
-		ball1.setBodyType(BodyType.DYNAMIC);
-		ball1.setCollidable(true);
-		ball1.setFixtureDef(fd);
-		
-		ball2 = new PhysicsEntity(Type.BALL2);
-		ball2.setPosition(getWidth()/2 -30/2, getHeight()/2 - 200);
-		ball2.setGraphics(assets.getTexture("ball2.png"));
-		ball2.setBodyType(BodyType.DYNAMIC);
-		ball2.setCollidable(true);
-		ball2.setFixtureDef(fd);
-		
-		addEntities(ball1, ball2);
-		
-		ball1.setLinearVelocity(0, 5);
-		ball2.setLinearVelocity(0, -5);
-		
-	}
+	
 	
 	private void initDesks()
 	{
@@ -296,6 +270,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 		uiRoot.getChildren().add(scorePlayer_2);	
 		
 	}
+	
 
 	@Override
 	protected void initInput() 
@@ -330,6 +305,43 @@ public class BreakoutApp extends GameApplication implements Runnable
 		
 	}
 	
+	int licznik =0;
+	private void initBalls0()
+	{
+		ball1 = new PhysicsEntity(Type.BALL);
+		ball1.setPosition(getWidth()/2 -30/2, getHeight()/2 + 120);
+		ball1.setGraphics(assets.getTexture("ball.png"));
+		
+		ball2 = new PhysicsEntity(Type.BALL2);
+		ball2.setPosition(getWidth()/2 -30/2, getHeight()/2 - 200);
+		ball2.setGraphics(assets.getTexture("ball2.png"));
+		
+		addEntities(ball1, ball2);
+	}
+	private void initBalls()
+	{	
+		FixtureDef fd = new FixtureDef();
+		fd.restitution = 0.8f;
+		fd.shape = new CircleShape();
+		fd.shape.setRadius(PhysicsManager.toMeters(15));
+		
+		
+		ball1.setBodyType(BodyType.DYNAMIC);
+		ball1.setFixtureDef(fd);
+		ball1.setCollidable(true);
+		
+		
+		ball2.setBodyType(BodyType.DYNAMIC);
+		ball2.setFixtureDef(fd);
+		ball2.setCollidable(true);
+		
+		
+		
+		ball1.setLinearVelocity(0, 5);
+		ball2.setLinearVelocity(0, -5);
+		
+	}
+	
 	@Override
 	protected void onUpdate() 
 	{
@@ -342,10 +354,11 @@ public class BreakoutApp extends GameApplication implements Runnable
 		desk2.setLinearVelocity(0, 0);
 		
 		if(playOnline)
-		{
-			System.out.println("Polaczono z clientem ");
-
-			if(Math.abs(v1.getY()) < 5)
+		{System.out.println("Polaczono z clientem ");
+			if(licznik < 1){System.out.println("***********************************");
+				initBalls();licznik++;}
+			
+			if(Math.abs(v1.getY())<5)
 			{
 				double x = v1.getX();
 				double signY = Math.signum(v1.getY());
@@ -359,6 +372,38 @@ public class BreakoutApp extends GameApplication implements Runnable
 				ball2.setLinearVelocity(x, signY * 5);
 			}
 		}
+		else if(!playOnline)
+		{
+			
+			if(Math.abs(v1.getY())>0 && Math.abs(v1.getX()) > 0)
+			{
+				ball1.setLinearVelocity(0, 0);
+			}
+			
+			if(Math.abs(v2.getY())>0 && Math.abs(v2.getX()) > 0)
+			{
+				ball2.setLinearVelocity(0, 0);
+			}
+		}
+		/*if(playOnline)
+		{
+			System.out.println("Polaczono z clientem ");
+			
+			if(licznik>=0)
+			{
+				System.out.println("***********************************");
+				
+				
+				
+				
+				
+				ball2.setBodyType(BodyType.DYNAMIC);
+				ball2.setCollidable(true);
+				ball2.setFixtureDef(fd);
+				licznik++;
+			}
+			
+		}*/
 		
 		
 		/*if((!flagaBall && !flagaBall2) || score_1.getValue() == 4800)
