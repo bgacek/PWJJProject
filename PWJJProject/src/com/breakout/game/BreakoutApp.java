@@ -133,7 +133,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 		initNetworking();
 		initBackGround();
 		initScreenBounds();
-		initBalls0();
+		initBalls();
 		initBricks();	
 		initDesks();
 		
@@ -306,40 +306,33 @@ public class BreakoutApp extends GameApplication implements Runnable
 	}
 	
 	int licznik =0;
-	private void initBalls0()
-	{
+	
+	private void initBalls()
+	{	
+//		FixtureDef fd = new FixtureDef();
+//		fd.restitution = 0.8f;
+//		fd.shape = new CircleShape();
+//		fd.shape.setRadius(PhysicsManager.toMeters(15));
+//		
 		ball1 = new PhysicsEntity(Type.BALL);
 		ball1.setPosition(getWidth()/2 -30/2, getHeight()/2 + 120);
 		ball1.setGraphics(assets.getTexture("ball.png"));
+		ball1.setBodyType(BodyType.DYNAMIC);
+		ball1.setCollidable(true);
+//		ball1.setFixtureDef(fd);
+		
 		
 		ball2 = new PhysicsEntity(Type.BALL2);
 		ball2.setPosition(getWidth()/2 -30/2, getHeight()/2 - 200);
 		ball2.setGraphics(assets.getTexture("ball2.png"));
+		ball2.setBodyType(BodyType.DYNAMIC);
+		ball2.setCollidable(true);
+	//	ball2.setFixtureDef(fd);
 		
 		addEntities(ball1, ball2);
-	}
-	private void initBalls()
-	{	
-		FixtureDef fd = new FixtureDef();
-		fd.restitution = 0.8f;
-		fd.shape = new CircleShape();
-		fd.shape.setRadius(PhysicsManager.toMeters(15));
-		
-		
-		ball1.setBodyType(BodyType.DYNAMIC);
-		ball1.setFixtureDef(fd);
-		ball1.setCollidable(true);
-		
-		
-		ball2.setBodyType(BodyType.DYNAMIC);
-		ball2.setFixtureDef(fd);
-		ball2.setCollidable(true);
-		
-		
-		
+
 		ball1.setLinearVelocity(0, 5);
 		ball2.setLinearVelocity(0, -5);
-		
 	}
 	
 	@Override
@@ -353,11 +346,31 @@ public class BreakoutApp extends GameApplication implements Runnable
 		desk1.setLinearVelocity(0, 0);
 		desk2.setLinearVelocity(0, 0);
 		
-		if(playOnline)
-		{System.out.println("Polaczono z clientem ");
-			if(licznik < 1){System.out.println("***********************************");
-				initBalls();licznik++;}
-			
+		if(!isConnected && isHost == true)
+		{
+			if(Math.abs(v1.getY())>0 && Math.abs(v1.getX()) > 0)
+				{
+					ball1.setLinearVelocity(0, 0);
+				}
+				
+				if(Math.abs(v2.getY())>0 && Math.abs(v2.getX()) > 0)
+				{
+					ball2.setLinearVelocity(0, 0);
+				}
+		}
+		else
+		{
+		if(licznik <1)
+		{
+			FixtureDef fd = new FixtureDef();
+			fd.restitution = 0.8f;
+			fd.shape = new CircleShape();
+			fd.shape.setRadius(PhysicsManager.toMeters(15));
+			ball1.setFixtureDef(fd);
+			ball2.setFixtureDef(fd);
+		}
+//		if(!playOnline)
+//		{	
 			if(Math.abs(v1.getY())<5)
 			{
 				double x = v1.getX();
@@ -371,20 +384,20 @@ public class BreakoutApp extends GameApplication implements Runnable
 				double signY = Math.signum(v2.getY());
 				ball2.setLinearVelocity(x, signY * 5);
 			}
-		}
-		else if(!playOnline)
-		{
-			
-			if(Math.abs(v1.getY())>0 && Math.abs(v1.getX()) > 0)
-			{
-				ball1.setLinearVelocity(0, 0);
-			}
-			
-			if(Math.abs(v2.getY())>0 && Math.abs(v2.getX()) > 0)
-			{
-				ball2.setLinearVelocity(0, 0);
-			}
-		}
+//		}
+//		else if(playOnline)
+//		{
+//			
+//			if(Math.abs(v1.getY())>0 && Math.abs(v1.getX()) > 0)
+//			{
+//				ball1.setLinearVelocity(0, 0);
+//			}
+//			
+//			if(Math.abs(v2.getY())>0 && Math.abs(v2.getX()) > 0)
+//			{
+//				ball2.setLinearVelocity(0, 0);
+//			}
+//		}
 		/*if(playOnline)
 		{
 			System.out.println("Polaczono z clientem ");
@@ -517,7 +530,7 @@ public class BreakoutApp extends GameApplication implements Runnable
 			thread2.run();
 			thread1.run();
 		}
-
+		}
 	}
 	
 	public void initChoice()
