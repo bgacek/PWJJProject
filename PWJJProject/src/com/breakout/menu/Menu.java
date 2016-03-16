@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import com.breakout.game.BA2;
+
 import com.breakout.game.BreakoutApp;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
@@ -38,6 +38,7 @@ public class Menu extends Application implements Runnable
 	{
 		Pane root = new Pane();
 		root.setPrefSize(640, 960);
+
 		InputStream is = Files.newInputStream(Paths.get("res/images/menu.jpg"));
 		Image img = new Image(is);
 		is.close();
@@ -53,6 +54,8 @@ public class Menu extends Application implements Runnable
 		Scene scene = new Scene(root);
 		
 		primaryStage.setScene(scene);
+		primaryStage.setResizable(false);
+		primaryStage.sizeToScene();
 		primaryStage.show();
 		
 	}
@@ -62,22 +65,43 @@ public class Menu extends Application implements Runnable
 
 		public GameMenu()
 		{
+			VBox logo = new VBox();
 			VBox menu0 = new VBox(10);
 			VBox menu1 = new VBox(10);
 			VBox menu2 = new VBox(10);
- 
+			
+			logo.setTranslateX(60);
+			logo.setTranslateY(160);
+			
 			menu0.setTranslateX(100);
 			menu1.setTranslateX(100);
 			menu2.setTranslateX(100);
-			menu0.setTranslateY(200);
-			menu1.setTranslateY(200);
-			menu2.setTranslateY(200);
+			menu0.setTranslateY(600);
+			menu1.setTranslateY(600);
+			menu2.setTranslateY(600);
  
 			final int offset =  600;
 			menu1.setTranslateX(offset);
 			menu2.setTranslateX(offset);
- 
-			MenuButton btnResume = new MenuButton("Run");
+			
+			GameLogo gameLogo = new GameLogo("Block Blaster");
+			
+			MenuButton btnResume0 = new MenuButton("Play Singleplayer");
+			btnResume0.setOnMouseClicked(event -> {
+		
+				BreakoutApp gameApp = new BreakoutApp("single", (Stage)this.getScene().getWindow());
+
+			    try 
+			    {
+					gameApp.run();
+				}
+			    catch (Exception e) 
+			    {
+					e.printStackTrace();
+				}
+			});
+			
+			MenuButton btnResume = new MenuButton("Play Multiplayer");
 			btnResume.setOnMouseClicked(event -> {
 		
 				getChildren().add(menu2);
@@ -133,8 +157,7 @@ public class Menu extends Application implements Runnable
 			MenuButton btnClient = new MenuButton("Klient");
 			btnClient.setOnMouseClicked(event -> {
 				
-				this.getScene().getWindow().hide();
-				
+
 			    BreakoutApp gameApp = new BreakoutApp(false, (Stage)this.getScene().getWindow());
 			    try 
 			    {
@@ -188,16 +211,33 @@ public class Menu extends Application implements Runnable
 			
 			MenuButton btnSound = new MenuButton("Sound");
 			MenuButton btnVideo = new MenuButton("Video");
- 
-			menu0.getChildren().addAll(btnResume, btnOptions, btnExit);
+			logo.getChildren().add(gameLogo);
+			menu0.getChildren().addAll(btnResume0, btnResume, btnOptions, btnExit);
 			menu1.getChildren().addAll(btnBackFromOptions, btnSound, btnVideo);
 			menu2.getChildren().addAll(btnBackFromStart, btnServer, btnClient);
  
-			Rectangle bg = new Rectangle(800, 500);
-			bg.setFill(Color.GRAY);
+			Rectangle bg = new Rectangle(640, 960);
+			bg.setFill(Color.BLACK);
 			bg.setOpacity(0.4);
-			getChildren().addAll(bg, menu0);
+			getChildren().addAll(bg, menu0, logo);
  
+		}
+	}
+	
+	private static class GameLogo extends StackPane
+	{
+		private Text text;
+ 
+		public GameLogo(String name)
+		{
+			text = new Text(name);
+			text.getFont();
+			text.setFill(Color.WHITE);
+			text.setFont(Font.font("Jokerman", 80));
+ 
+			setAlignment(Pos.CENTER);
+			setRotate(-0.5);
+			getChildren().addAll(text);
 		}
 	}
 
@@ -209,12 +249,12 @@ public class Menu extends Application implements Runnable
 		{
 			text = new Text(name);
 			text.getFont();
-			text.setFont(Font.font(20));
+			text.setFont(Font.font(25));
 			text.setFill(Color.WHITE);
  
-			Rectangle bg = new Rectangle(250, 30);
-			bg.setOpacity(0.6);
-			bg.setFill(Color.BLACK);
+			Rectangle bg = new Rectangle(350, 40);
+			bg.setOpacity(0.3);
+			bg.setFill(Color.WHITESMOKE);
 			bg.setEffect(new GaussianBlur(3.5));
  
 			setAlignment(Pos.CENTER_LEFT);
